@@ -1,0 +1,3066 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CanteenPay — HR Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+/* ── TOKENS ─────────────────────────────────────────────────── */
+:root {
+  --navy:       #0F1E35;
+  --navy-mid:   #162844;
+  --navy-light: #1E3A5F;
+  --steel:      #2E4A6B;
+  --rule:       #E2E8F0;
+  --surface:    #F8FAFC;
+  --white:      #FFFFFF;
+  --text-primary:   #0F172A;
+  --text-secondary: #475569;
+  --text-muted:     #94A3B8;
+  --emerald:    #059669;
+  --emerald-lt: #D1FAE5;
+  --amber:      #D97706;
+  --amber-lt:   #FEF3C7;
+  --rose:       #E11D48;
+  --rose-lt:    #FFE4E6;
+  --blue:       #2563EB;
+  --blue-lt:    #DBEAFE;
+  --sidebar-w:  240px;
+  --header-h:   60px;
+  --radius:     8px;
+  --shadow-sm:  0 1px 3px rgba(0,0,0,.08);
+  --shadow-md:  0 4px 12px rgba(0,0,0,.10);
+}
+
+/* ── RESET ──────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; font-family: 'Inter', sans-serif; background: var(--surface); color: var(--text-primary); font-size: 14px; line-height: 1.5; }
+button { cursor: pointer; font-family: inherit; }
+table { border-collapse: collapse; width: 100%; }
+a { text-decoration: none; color: inherit; }
+
+/* ── LAYOUT ─────────────────────────────────────────────────── */
+.app { display: flex; height: 100vh; overflow: hidden; }
+
+/* ── SIDEBAR ────────────────────────────────────────────────── */
+.sidebar {
+  width: var(--sidebar-w);
+  background: var(--navy);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  overflow-y: auto;
+}
+.sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 20px 20px 16px;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+.logo-icon {
+  width: 34px; height: 34px;
+  background: var(--emerald);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+}
+.logo-text { color: #fff; font-size: 15px; font-weight: 700; letter-spacing: -.3px; }
+.logo-sub  { color: rgba(255,255,255,.4); font-size: 10px; font-weight: 500; letter-spacing: .6px; text-transform: uppercase; }
+
+.sidebar-section { padding: 16px 12px 4px; }
+.sidebar-label {
+  color: rgba(255,255,255,.3);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .8px;
+  text-transform: uppercase;
+  padding: 0 8px;
+  margin-bottom: 6px;
+}
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 10px;
+  border-radius: 6px;
+  color: rgba(255,255,255,.55);
+  font-size: 13.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background .15s, color .15s;
+  margin-bottom: 2px;
+}
+.nav-item:hover { background: rgba(255,255,255,.07); color: rgba(255,255,255,.9); }
+.nav-item.active { background: rgba(255,255,255,.12); color: #fff; }
+.nav-item .icon { font-size: 15px; width: 20px; text-align: center; }
+.nav-badge {
+  margin-left: auto;
+  background: var(--emerald);
+  color: #fff;
+  font-size: 10px; font-weight: 700;
+  padding: 2px 6px; border-radius: 10px;
+}
+
+.sync-status {
+  margin: auto 12px 16px;
+  background: rgba(255,255,255,.06);
+  border-radius: 8px;
+  padding: 12px;
+}
+.sync-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.sync-row:last-child { margin-bottom: 0; }
+.sync-label { font-size: 11px; color: rgba(255,255,255,.4); }
+.sync-time  { font-size: 11px; color: rgba(255,255,255,.7); font-family: 'JetBrains Mono', monospace; }
+.sync-dot   { width: 6px; height: 6px; border-radius: 50%; background: var(--emerald); display: inline-block; margin-right: 5px; animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+/* ── MAIN ───────────────────────────────────────────────────── */
+.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+/* ── TOPBAR ─────────────────────────────────────────────────── */
+.topbar {
+  height: var(--header-h);
+  background: var(--white);
+  border-bottom: 1px solid var(--rule);
+  display: flex; align-items: center;
+  padding: 0 28px;
+  gap: 16px;
+  flex-shrink: 0;
+  box-shadow: var(--shadow-sm);
+}
+.topbar-title { font-size: 16px; font-weight: 700; color: var(--text-primary); }
+.topbar-sub   { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
+.topbar-spacer { flex: 1; }
+
+.month-picker {
+  display: flex; align-items: center; gap: 8px;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  padding: 6px 12px;
+  font-size: 13px; font-weight: 500;
+  background: var(--white);
+  cursor: pointer;
+}
+.month-picker:hover { border-color: var(--steel); }
+
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 14px;
+  border-radius: var(--radius);
+  font-size: 13px; font-weight: 600;
+  border: none;
+  transition: all .15s;
+}
+.btn-primary { background: var(--navy); color: #fff; }
+.btn-primary:hover { background: var(--navy-light); }
+.btn-ghost { background: transparent; color: var(--text-secondary); border: 1px solid var(--rule); }
+.btn-ghost:hover { background: var(--surface); }
+.btn-emerald { background: var(--emerald); color: #fff; }
+.btn-emerald:hover { background: #047857; }
+.btn-sm { padding: 5px 10px; font-size: 12px; }
+
+.avatar {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  background: var(--navy);
+  color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 700;
+}
+
+/* ── CONTENT ────────────────────────────────────────────────── */
+.content { flex: 1; overflow-y: auto; padding: 24px 28px; }
+
+/* ── KPI CARDS ──────────────────────────────────────────────── */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.kpi-card {
+  background: var(--white);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  padding: 20px;
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  overflow: hidden;
+}
+.kpi-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+}
+.kpi-card.green::before  { background: var(--emerald); }
+.kpi-card.blue::before   { background: var(--blue); }
+.kpi-card.amber::before  { background: var(--amber); }
+.kpi-card.rose::before   { background: var(--rose); }
+
+.kpi-label { font-size: 11px; font-weight: 600; letter-spacing: .5px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; }
+.kpi-value { font-size: 28px; font-weight: 700; color: var(--text-primary); letter-spacing: -1px; line-height: 1; margin-bottom: 6px; }
+.kpi-value span { font-family: 'JetBrains Mono', monospace; }
+.kpi-change { font-size: 12px; color: var(--text-muted); }
+.kpi-icon { position: absolute; top: 18px; right: 18px; font-size: 22px; opacity: .15; }
+
+/* ── PANELS ─────────────────────────────────────────────────── */
+.panel-row { display: grid; grid-template-columns: 1fr 340px; gap: 16px; margin-bottom: 24px; }
+
+.panel {
+  background: var(--white);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+.panel-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--rule);
+}
+.panel-title { font-size: 14px; font-weight: 700; color: var(--text-primary); }
+.panel-sub   { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
+.panel-body  { padding: 20px; }
+
+/* ── CHART ──────────────────────────────────────────────────── */
+.chart-wrap { position: relative; }
+.chart-legend { display: flex; gap: 16px; margin-bottom: 16px; }
+.legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-secondary); }
+.legend-dot  { width: 10px; height: 10px; border-radius: 2px; }
+
+.bar-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  height: 140px;
+  padding-bottom: 24px;
+  position: relative;
+}
+.bar-chart::after {
+  content: '';
+  position: absolute;
+  bottom: 24px; left: 0; right: 0;
+  border-top: 1px dashed var(--rule);
+}
+.bar-group { display: flex; gap: 3px; align-items: flex-end; flex: 1; position: relative; }
+.bar {
+  flex: 1;
+  border-radius: 4px 4px 0 0;
+  transition: opacity .15s;
+  min-width: 8px;
+}
+.bar:hover { opacity: .8; }
+.bar.lunch  { background: var(--navy-light); }
+.bar.dinner { background: #93C5FD; }
+.bar-day { position: absolute; bottom: -20px; left: 50%; transform: translateX(-50%); font-size: 10px; color: var(--text-muted); white-space: nowrap; }
+
+/* ── DEPT BREAKDOWN ─────────────────────────────────────────── */
+.dept-list { display: flex; flex-direction: column; gap: 12px; }
+.dept-row { display: flex; flex-direction: column; gap: 4px; }
+.dept-info { display: flex; justify-content: space-between; align-items: center; }
+.dept-name   { font-size: 13px; font-weight: 500; }
+.dept-amount { font-size: 13px; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+.progress-bar { height: 6px; background: var(--rule); border-radius: 3px; overflow: hidden; }
+.progress-fill { height: 100%; border-radius: 3px; background: var(--navy-light); transition: width .6s ease; }
+
+/* ── DEDUCTION TABLE ────────────────────────────────────────── */
+.table-controls {
+  display: flex; align-items: center; gap: 10px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--rule);
+}
+.search-box {
+  display: flex; align-items: center; gap: 8px;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  padding: 7px 12px;
+  flex: 1; max-width: 280px;
+  background: var(--surface);
+}
+.search-box input {
+  border: none; background: none; outline: none;
+  font-family: inherit; font-size: 13px; color: var(--text-primary);
+  width: 100%;
+}
+.search-box input::placeholder { color: var(--text-muted); }
+
+.filter-sel {
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  padding: 7px 10px;
+  font-family: inherit; font-size: 13px;
+  background: var(--white); color: var(--text-primary);
+  cursor: pointer; outline: none;
+}
+
+.data-table th {
+  background: var(--surface);
+  font-size: 11px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: .5px;
+  color: var(--text-muted);
+  padding: 10px 16px;
+  text-align: left;
+  border-bottom: 1px solid var(--rule);
+  white-space: nowrap;
+}
+.data-table th.num, .data-table td.num { text-align: right; }
+.data-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--rule);
+  font-size: 13px;
+  color: var(--text-primary);
+  vertical-align: middle;
+}
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tbody tr:hover td { background: #F8FAFC; }
+
+.emp-cell { display: flex; align-items: center; gap: 10px; }
+.emp-avatar {
+  width: 30px; height: 30px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; color: #fff; flex-shrink: 0;
+}
+.emp-name { font-weight: 500; }
+.emp-code { font-size: 11px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; }
+
+.badge {
+  display: inline-flex; align-items: center;
+  padding: 3px 8px; border-radius: 4px;
+  font-size: 11px; font-weight: 600;
+  letter-spacing: .3px;
+}
+.badge-green  { background: var(--emerald-lt); color: #065F46; }
+.badge-amber  { background: var(--amber-lt);   color: #92400E; }
+.badge-blue   { background: var(--blue-lt);    color: #1E40AF; }
+.badge-rose   { background: var(--rose-lt);    color: #9F1239; }
+
+.mono { font-family: 'JetBrains Mono', monospace; font-size: 13px; }
+
+/* ── TABLE FOOTER ───────────────────────────────────────────── */
+.table-foot {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 20px;
+  border-top: 1px solid var(--rule);
+  background: #F8FAFC;
+}
+.total-label { font-size: 13px; font-weight: 600; color: var(--text-secondary); }
+.total-value { font-size: 16px; font-weight: 800; color: var(--text-primary); font-family: 'JetBrains Mono', monospace; }
+.export-btns { display: flex; gap: 8px; }
+
+/* ── TABS ───────────────────────────────────────────────────── */
+.tabs { display: flex; gap: 2px; background: var(--surface); border-radius: 6px; padding: 3px; margin-bottom: 16px; border: 1px solid var(--rule); }
+.tab { flex: 1; padding: 6px 12px; font-size: 13px; font-weight: 500; text-align: center; border-radius: 4px; color: var(--text-muted); cursor: pointer; transition: all .15s; border: none; background: none; }
+.tab.active { background: var(--white); color: var(--text-primary); font-weight: 600; box-shadow: var(--shadow-sm); }
+
+/* ── MINI STAT ──────────────────────────────────────────────── */
+.mini-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+.mini-stat { background: var(--surface); border: 1px solid var(--rule); border-radius: 6px; padding: 12px; text-align: center; }
+.mini-stat-val { font-size: 20px; font-weight: 800; color: var(--text-primary); font-family: 'JetBrains Mono', monospace; }
+.mini-stat-lbl { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+/* ── STATUS TIMELINE ────────────────────────────────────────── */
+.timeline { display: flex; flex-direction: column; gap: 0; }
+.tl-item { display: flex; gap: 12px; padding: 10px 0; position: relative; }
+.tl-item:not(:last-child)::before {
+  content: '';
+  position: absolute;
+  left: 15px; top: 32px; bottom: -10px;
+  width: 1px; background: var(--rule);
+}
+.tl-dot {
+  width: 30px; height: 30px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; flex-shrink: 0; position: relative; z-index: 1;
+}
+.tl-body { flex: 1; }
+.tl-title { font-size: 13px; font-weight: 600; margin-bottom: 1px; }
+.tl-desc  { font-size: 12px; color: var(--text-muted); }
+
+/* ── MODAL OVERLAY ──────────────────────────────────────────── */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.4);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1000;
+  opacity: 0; pointer-events: none;
+  transition: opacity .2s;
+}
+.modal-overlay.open { opacity: 1; pointer-events: all; }
+.modal {
+  background: var(--white);
+  border-radius: 12px;
+  width: 480px;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0,0,0,.2);
+  transform: translateY(12px);
+  transition: transform .2s;
+}
+.modal-overlay.open .modal { transform: translateY(0); }
+.modal-head { padding: 20px 24px; border-bottom: 1px solid var(--rule); display: flex; align-items: center; justify-content: space-between; }
+.modal-title { font-size: 16px; font-weight: 700; }
+.modal-close { background: none; border: none; font-size: 20px; color: var(--text-muted); cursor: pointer; line-height: 1; }
+.modal-body  { padding: 24px; }
+.modal-foot  { padding: 16px 24px; border-top: 1px solid var(--rule); display: flex; justify-content: flex-end; gap: 10px; }
+
+.detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+.detail-cell { background: var(--surface); border-radius: 6px; padding: 12px; }
+.detail-lbl  { font-size: 11px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: .4px; margin-bottom: 3px; }
+.detail-val  { font-size: 14px; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+
+.day-log { display: flex; gap: 0; flex-wrap: wrap; gap: 3px; }
+.day-cell {
+  width: 26px; height: 26px; border-radius: 4px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 600;
+  cursor: pointer; position: relative;
+}
+.day-cell.both   { background: var(--navy); color: #fff; }
+.day-cell.lunch  { background: var(--emerald-lt); color: #065F46; }
+.day-cell.dinner { background: var(--blue-lt); color: #1E40AF; }
+.day-cell.absent { background: var(--rule); color: var(--text-muted); }
+.day-cell.present { background: var(--white); color: var(--text-secondary); border: 1px solid var(--steel); }
+.day-cell.late   { position: relative; }
+.day-cell.late::after {
+  content: ''; position: absolute; top: -2px; right: -2px;
+  width: 7px; height: 7px; border-radius: 50%; background: var(--amber);
+  border: 1.5px solid var(--white);
+}
+.day-legend { display: flex; gap: 12px; margin-top: 10px; flex-wrap: wrap; }
+.day-leg-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text-secondary); }
+.day-leg-swatch { width: 12px; height: 12px; border-radius: 2px; }
+
+/* ── NOTIFICATION TOAST ─────────────────────────────────────── */
+.toast {
+  position: fixed; bottom: 24px; right: 24px;
+  background: var(--navy);
+  color: #fff;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 13px; font-weight: 500;
+  box-shadow: var(--shadow-md);
+  display: flex; align-items: center; gap: 10px;
+  transform: translateY(80px); opacity: 0;
+  transition: all .3s;
+  z-index: 2000;
+}
+.toast.show { transform: translateY(0); opacity: 1; }
+.toast-icon { font-size: 16px; }
+
+/* ── SCROLLBAR ──────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 3px; }
+
+/* ── PAGES ──────────────────────────────────────────────────── */
+.page { display: none; }
+.page.active { display: block; }
+
+.page-head {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 20px;
+}
+.page-head-title { font-size: 20px; font-weight: 700; letter-spacing: -.3px; }
+.page-head-sub   { font-size: 12.5px; color: var(--text-muted); margin-top: 2px; }
+
+/* ── FORM ELEMENTS ──────────────────────────────────────────── */
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 18px; }
+.form-field { display: flex; flex-direction: column; gap: 5px; }
+.form-field.full { grid-column: 1 / -1; }
+.form-label { font-size: 11.5px; font-weight: 600; color: var(--text-secondary); }
+.form-input, .form-select {
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  padding: 8px 11px;
+  font-family: inherit; font-size: 13px;
+  color: var(--text-primary);
+  background: var(--white);
+  outline: none;
+  transition: border-color .15s;
+}
+.form-input:focus, .form-select:focus { border-color: var(--steel); }
+.form-hint { font-size: 11px; color: var(--text-muted); }
+
+.toggle { position: relative; width: 40px; height: 22px; flex-shrink: 0; }
+.toggle input { opacity: 0; width: 0; height: 0; }
+.toggle-track {
+  position: absolute; inset: 0; background: var(--rule);
+  border-radius: 20px; cursor: pointer; transition: background .15s;
+}
+.toggle-track::before {
+  content: ''; position: absolute; width: 16px; height: 16px;
+  left: 3px; top: 3px; background: var(--white); border-radius: 50%;
+  transition: transform .15s; box-shadow: var(--shadow-sm);
+}
+.toggle input:checked + .toggle-track { background: var(--emerald); }
+.toggle input:checked + .toggle-track::before { transform: translateX(18px); }
+
+/* ── PRICE CARDS ────────────────────────────────────────────── */
+.price-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 20px; }
+.price-card {
+  background: var(--white); border: 1px solid var(--rule); border-radius: var(--radius);
+  padding: 20px; box-shadow: var(--shadow-sm); position: relative; overflow: hidden;
+}
+.price-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; }
+.price-card.lunch::before  { background: var(--navy-light); }
+.price-card.dinner::before { background: #93C5FD; }
+.price-card-label { display:flex; align-items:center; gap:8px; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.5px; color:var(--text-muted); margin-bottom:10px; }
+.price-card-value { font-size: 30px; font-weight: 700; font-family:'JetBrains Mono', monospace; letter-spacing:-1px; }
+.price-card-effective { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+
+/* ── STATUS PILL (connection) ──────────────────────────────── */
+.conn-pill { display:flex; align-items:center; gap:6px; font-size:11px; color: rgba(255,255,255,.55); }
+.conn-dot { width:6px; height:6px; border-radius:50%; }
+.conn-dot.online  { background: var(--emerald); animation: pulse 2s infinite; }
+.conn-dot.offline { background: var(--rose); }
+
+/* ── EMPTY STATE ────────────────────────────────────────────── */
+.empty-state { text-align: center; padding: 48px 20px; color: var(--text-muted); }
+.empty-state-icon { font-size: 30px; margin-bottom: 10px; opacity: .6; }
+.empty-state-title { font-size: 14px; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px; }
+.empty-state-sub { font-size: 12.5px; }
+
+/* ── RESPONSIVE ─────────────────────────────────────────────── */
+@media (max-width: 1100px) {
+  .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+  .panel-row { grid-template-columns: 1fr; }
+  .form-grid { grid-template-columns: 1fr; }
+  .price-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ── SIDEBAR ─────────────────────────────────────────────── -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">🍽️</div>
+      <div>
+        <div class="logo-text">CanteenPay</div>
+        <div class="logo-sub">HR Management</div>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">Overview</div>
+      <div class="nav-item active" onclick="showPage('dashboard', this)">
+        <span class="icon">📊</span> Dashboard
+      </div>
+      <div class="nav-item" onclick="showPage('reports', this)">
+        <span class="icon">📋</span> Monthly Reports
+        <span class="nav-badge" id="reportsBadge">3</span>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">Data</div>
+      <div class="nav-item" onclick="showPage('employees', this)">
+        <span class="icon">👥</span> Employees
+      </div>
+      <div class="nav-item" onclick="showPage('attendancelogs', this)">
+        <span class="icon">🕐</span> Attendance Logs
+      </div>
+      <div class="nav-item" onclick="showPage('canteenlogs', this)">
+        <span class="icon">🍽️</span> Canteen Logs
+      </div>
+      <div class="nav-item" onclick="showPage('dashboard', this)">
+        <span class="icon">💳</span> Deductions
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">System</div>
+      <div class="nav-item" onclick="showPage('syncdevices', this)">
+        <span class="icon">🔄</span> Sync Devices
+      </div>
+      <div class="nav-item" onclick="showPage('pricing', this)">
+        <span class="icon">💰</span> Meal Pricing
+      </div>
+      <div class="nav-item" onclick="showToast('Settings coming soon'); setNavOnly(this)">
+        <span class="icon">⚙️</span> Settings
+      </div>
+    </div>
+
+    <div class="sync-status">
+      <div class="sidebar-label" style="padding:0;margin-bottom:8px;">Device Sync</div>
+      <div class="sync-row">
+        <span class="sync-label"><span class="sync-dot"></span>Office Biometric</span>
+        <span class="sync-time" id="sidebarOfficeSync">—</span>
+      </div>
+      <div class="sync-row">
+        <span class="sync-label"><span class="sync-dot"></span>Canteen Machine</span>
+        <span class="sync-time" id="sidebarCanteenSync">—</span>
+      </div>
+      <div class="sync-row" style="margin-top:2px;padding-top:8px;border-top:1px solid rgba(255,255,255,.08);">
+        <span class="conn-pill"><span class="conn-dot" id="fbDot"></span><span id="fbLabel">Checking backend…</span></span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ── MAIN ────────────────────────────────────────────────── -->
+  <div class="main">
+
+    <!-- TOPBAR -->
+    <header class="topbar">
+      <div>
+        <div class="topbar-title" id="topbarTitle">October 2025</div>
+        <div class="topbar-sub" id="topbarSub">Monthly Canteen Deduction Report</div>
+      </div>
+      <div class="topbar-spacer"></div>
+      <input type="month" class="month-picker" id="topbarMonthPicker" onchange="onDashboardMonthChange()" />
+      <button class="btn btn-ghost" id="topbarSecondaryBtn" onclick="runMatching()">
+        🔄 Run Matching
+      </button>
+      <button class="btn btn-primary" id="topbarPrimaryBtn" onclick="openGenModal()">
+        ⚡ Generate Report
+      </button>
+      <div class="avatar" title="HR Admin">HR</div>
+    </header>
+
+    <!-- CONTENT -->
+    <main class="content">
+
+    <!-- ══════════════════════ PAGE: DASHBOARD ══════════════════════ -->
+    <div class="page active" id="page-dashboard">
+
+      <!-- KPI CARDS -->
+      <div class="kpi-grid">
+        <div class="kpi-card green">
+          <div class="kpi-icon">👥</div>
+          <div class="kpi-label">Active Employees</div>
+          <div class="kpi-value"><span id="dashActiveEmp">0</span></div>
+          <div class="kpi-change" id="dashActiveEmpSub">—</div>
+        </div>
+        <div class="kpi-card blue">
+          <div class="kpi-icon">🍱</div>
+          <div class="kpi-label">Total Lunches Served</div>
+          <div class="kpi-value"><span id="dashTotalLunch">0</span></div>
+          <div class="kpi-change" id="dashLunchAvg">—</div>
+        </div>
+        <div class="kpi-card amber">
+          <div class="kpi-icon">🌙</div>
+          <div class="kpi-label">Total Dinners Served</div>
+          <div class="kpi-value"><span id="dashTotalDinner">0</span></div>
+          <div class="kpi-change" id="dashDinnerAvg">—</div>
+        </div>
+        <div class="kpi-card rose">
+          <div class="kpi-icon">৳</div>
+          <div class="kpi-label">Total Deductions (৳)</div>
+          <div class="kpi-value"><span id="dashTotalDeduction">0</span></div>
+          <div class="kpi-change" id="dashDeductionSub">—</div>
+        </div>
+      </div>
+
+      <!-- CHART + DEPT -->
+      <div class="panel-row">
+
+        <!-- BAR CHART -->
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <div class="panel-title">Daily Meal Consumption</div>
+              <div class="panel-sub" id="chartSub">Lunch vs Dinner</div>
+            </div>
+            <div class="tabs" style="margin:0; width:auto;">
+              <button class="tab active" onclick="setTab(this,'week')">Week</button>
+              <button class="tab" onclick="setTab(this,'month')">Month</button>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="chart-legend">
+              <div class="legend-item">
+                <div class="legend-dot" style="background:var(--navy-light)"></div> Lunch
+              </div>
+              <div class="legend-item">
+                <div class="legend-dot" style="background:#93C5FD"></div> Dinner
+              </div>
+            </div>
+            <div class="bar-chart" id="barChart"></div>
+          </div>
+        </div>
+
+        <!-- DEPT BREAKDOWN -->
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <div class="panel-title">By Department</div>
+              <div class="panel-sub">Total deductions (৳) this month</div>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="mini-stats">
+              <div class="mini-stat">
+                <div class="mini-stat-val" id="dashWorkingDays">0</div>
+                <div class="mini-stat-lbl">Days With Activity</div>
+              </div>
+              <div class="mini-stat">
+                <div class="mini-stat-val" id="dashAvgPerEmp">৳ 0</div>
+                <div class="mini-stat-lbl">Avg per Employee</div>
+              </div>
+            </div>
+            <div class="dept-list" id="deptList"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DEDUCTION TABLE -->
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <div class="panel-title">Employee Deduction Report</div>
+            <div class="panel-sub" id="tableSub">Matched from attendance & canteen logs</div>
+          </div>
+          <span class="badge badge-amber" id="dashStatusBadge">DRAFT</span>
+        </div>
+
+        <div class="table-controls">
+          <div class="search-box">
+            <span>🔍</span>
+            <input type="text" id="searchInput" placeholder="Search employee name or code…" oninput="filterTable()" />
+          </div>
+          <select class="filter-sel" id="deptFilter" onchange="filterTable()">
+            <option value="">All Departments</option>
+            <option>Engineering</option>
+            <option>HR</option>
+            <option>Finance</option>
+            <option>Operations</option>
+            <option>Sales</option>
+            <option>Admin</option>
+          </select>
+          <select class="filter-sel" id="statusFilter" onchange="filterTable()">
+            <option value="">All Status</option>
+            <option>Active</option>
+            <option>Partial</option>
+          </select>
+        </div>
+
+        <div style="overflow-x:auto;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Employee</th>
+                <th>Department</th>
+                <th class="num">Present Days</th>
+                <th class="num">Lunches</th>
+                <th class="num">Dinners</th>
+                <th class="num">Lunch Cost (৳)</th>
+                <th class="num">Dinner Cost (৳)</th>
+                <th class="num">Total (৳)</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+          </table>
+        </div>
+
+        <div class="table-foot">
+          <div>
+            <div class="total-label">Grand Total Deduction</div>
+            <div class="total-value">৳ <span id="dashGrandTotal">0</span></div>
+          </div>
+          <div class="export-btns">
+            <button class="btn btn-ghost btn-sm" onclick="exportDashboardExcel()">
+              📥 Export Excel
+            </button>
+            <button class="btn btn-ghost btn-sm" onclick="exportDashboardPdf()">
+              📄 Export PDF
+            </button>
+            <button class="btn btn-emerald btn-sm" onclick="finalizeToPayroll()">
+              ✅ Finalize & Send to Payroll
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- PROCESS TIMELINE -->
+      <div class="panel" style="margin-top:16px;">
+        <div class="panel-head">
+          <div class="panel-title">Report Workflow Status</div>
+        </div>
+        <div class="panel-body">
+          <div class="timeline" id="workflowTimeline">
+            <div class="tl-item">
+              <div class="tl-dot" style="background:var(--rule); color:var(--text-muted)">1</div>
+              <div class="tl-body">
+                <div class="tl-title" style="color:var(--text-muted)">Data Synced</div>
+                <div class="tl-desc" id="tlSyncedDesc">Waiting for device sync</div>
+              </div>
+            </div>
+            <div class="tl-item">
+              <div class="tl-dot" style="background:var(--rule); color:var(--text-muted)">2</div>
+              <div class="tl-body">
+                <div class="tl-title" style="color:var(--text-muted)">Matching Complete</div>
+                <div class="tl-desc" id="tlMatchDesc">Click "Run Matching" above to check attendance vs canteen scans</div>
+              </div>
+            </div>
+            <div class="tl-item">
+              <div class="tl-dot" style="background:var(--rule); color:var(--text-muted)">3</div>
+              <div class="tl-body">
+                <div class="tl-title" style="color:var(--text-muted)">HR Review</div>
+                <div class="tl-desc">Awaiting HR sign-off before payroll export</div>
+              </div>
+            </div>
+            <div class="tl-item">
+              <div class="tl-dot" style="background:var(--rule); color:var(--text-muted)">4</div>
+              <div class="tl-body">
+                <div class="tl-title" style="color:var(--text-muted)">Payroll Export</div>
+                <div class="tl-desc" id="tlPayrollDesc">Finalized report pushed to payroll system</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <!-- ══════════════════════ /PAGE: DASHBOARD ═════════════════════ -->
+
+    <!-- ══════════════════════ PAGE: EMPLOYEES ══════════════════════ -->
+    <div class="page" id="page-employees">
+      <div class="page-head">
+        <div>
+          <div class="page-head-title">Employees</div>
+          <div class="page-head-sub" id="empCountSub">Loading…</div>
+        </div>
+        <div style="display:flex;gap:10px;">
+          <button class="btn btn-ghost" onclick="downloadEmpTemplate()">📄 Download Template</button>
+          <input type="file" id="empImportFile" accept=".xlsx,.xls,.csv" style="display:none;" onchange="handleEmpFileSelected(event)" />
+          <button class="btn btn-ghost" onclick="document.getElementById('empImportFile').click()">⬆️ Import Excel</button>
+          <button class="btn btn-primary" onclick="openEmpModal()">➕ Add Employee</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="table-controls">
+          <div class="search-box">
+            <span>🔍</span>
+            <input type="text" id="empSearchInput" placeholder="Search employee name or code…" oninput="filterEmpTable()" />
+          </div>
+          <select class="filter-sel" id="empDeptFilter" onchange="filterEmpTable()">
+            <option value="">All Departments</option>
+            <option>Engineering</option>
+            <option>HR</option>
+            <option>Finance</option>
+            <option>Operations</option>
+            <option>Sales</option>
+            <option>Admin</option>
+          </select>
+          <select class="filter-sel" id="empStatusFilter" onchange="filterEmpTable()">
+            <option value="">All Status</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Employee</th>
+                <th>Department</th>
+                <th>Joined</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="empTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <!-- ══════════════════════ /PAGE: EMPLOYEES ═════════════════════ -->
+
+    <!-- ══════════════════════ PAGE: ATTENDANCE LOGS ════════════════ -->
+    <div class="page" id="page-attendancelogs">
+      <div class="page-head">
+        <div>
+          <div class="page-head-title">Attendance Logs</div>
+          <div class="page-head-sub" id="attCountSub">Loading…</div>
+        </div>
+        <button class="btn btn-primary" onclick="openAttModal()">➕ Add Manual Entry</button>
+      </div>
+
+      <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr);">
+        <div class="kpi-card green">
+          <div class="kpi-icon">✅</div>
+          <div class="kpi-label">Present Today</div>
+          <div class="kpi-value"><span id="attPresentToday">0</span></div>
+          <div class="kpi-change">Office Biometric</div>
+        </div>
+        <div class="kpi-card amber">
+          <div class="kpi-icon">⏰</div>
+          <div class="kpi-label">Late Check-ins Today</div>
+          <div class="kpi-value"><span id="attLateToday">0</span></div>
+          <div class="kpi-change">After 9:30 AM</div>
+        </div>
+        <div class="kpi-card rose">
+          <div class="kpi-icon">🚫</div>
+          <div class="kpi-label">Absent Today</div>
+          <div class="kpi-value"><span id="attAbsentToday">0</span></div>
+          <div class="kpi-change">No check-in recorded</div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="table-controls">
+          <div class="search-box">
+            <span>🔍</span>
+            <input type="text" id="attSearchInput" placeholder="Search employee name or code…" oninput="filterAttTable()" />
+          </div>
+          <select class="filter-sel" id="attDeptFilter" onchange="filterAttTable()">
+            <option value="">All Departments</option>
+            <option>Engineering</option>
+            <option>HR</option>
+            <option>Finance</option>
+            <option>Operations</option>
+            <option>Sales</option>
+            <option>Admin</option>
+          </select>
+          <select class="filter-sel" id="attStatusFilter" onchange="filterAttTable()">
+            <option value="">All Status</option>
+            <option value="Present">Present</option>
+            <option value="Late">Late</option>
+            <option value="Absent">Absent</option>
+          </select>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Date</th>
+                <th>Employee</th>
+                <th>Department</th>
+                <th>Check-in</th>
+                <th>Check-out</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="attTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <!-- ══════════════════════ /PAGE: ATTENDANCE LOGS ═══════════════ -->
+
+    <!-- ══════════════════════ PAGE: CANTEEN LOGS ═══════════════════ -->
+    <div class="page" id="page-canteenlogs">
+      <div class="page-head">
+        <div>
+          <div class="page-head-title">Canteen Logs</div>
+          <div class="page-head-sub" id="logCountSub">Loading…</div>
+        </div>
+        <button class="btn btn-primary" onclick="openLogModal()">➕ Add Manual Log</button>
+      </div>
+
+      <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr);">
+        <div class="kpi-card blue">
+          <div class="kpi-icon">🍱</div>
+          <div class="kpi-label">Lunch Scans Today</div>
+          <div class="kpi-value"><span id="logLunchToday">0</span></div>
+          <div class="kpi-change">Canteen Machine — Zone A</div>
+        </div>
+        <div class="kpi-card amber">
+          <div class="kpi-icon">🌙</div>
+          <div class="kpi-label">Dinner Scans Today</div>
+          <div class="kpi-value"><span id="logDinnerToday">0</span></div>
+          <div class="kpi-change">Canteen Machine — Zone A</div>
+        </div>
+        <div class="kpi-card rose">
+          <div class="kpi-icon">⚠️</div>
+          <div class="kpi-label">Unmatched Scans</div>
+          <div class="kpi-value"><span id="logUnmatched">0</span></div>
+          <div class="kpi-change">Outside meal window or unrecognized ID</div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="table-controls">
+          <div class="search-box">
+            <span>🔍</span>
+            <input type="text" id="logSearchInput" placeholder="Search employee name or code…" oninput="filterLogTable()" />
+          </div>
+          <select class="filter-sel" id="logMealFilter" onchange="filterLogTable()">
+            <option value="">All Meals</option>
+            <option value="Lunch">Lunch</option>
+            <option value="Dinner">Dinner</option>
+          </select>
+          <select class="filter-sel" id="logStatusFilter" onchange="filterLogTable()">
+            <option value="">All Status</option>
+            <option value="Matched">Matched</option>
+            <option value="Unmatched">Unmatched</option>
+          </select>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Timestamp</th>
+                <th>Employee</th>
+                <th>Meal</th>
+                <th>Device</th>
+                <th>Status</th>
+                <th>Billable</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="logTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <!-- ══════════════════════ /PAGE: CANTEEN LOGS ══════════════════ -->
+
+    <!-- ══════════════════════ PAGE: MEAL PRICING ═══════════════════ -->
+    <div class="page" id="page-pricing">
+      <div class="page-head">
+        <div>
+          <div class="page-head-title">Meal Pricing Settings</div>
+          <div class="page-head-sub">Controls the per-meal rate used across every deduction calculation</div>
+        </div>
+      </div>
+
+      <div class="price-grid">
+        <div class="price-card lunch">
+          <div class="price-card-label">🍱 Current Lunch Price</div>
+          <div class="price-card-value">৳ <span id="priceLunchDisplay">60</span></div>
+          <div class="price-card-effective" id="priceLunchEffective">Effective since Oct 1, 2025</div>
+        </div>
+        <div class="price-card dinner">
+          <div class="price-card-label">🌙 Current Dinner Price</div>
+          <div class="price-card-value">৳ <span id="priceDinnerDisplay">50</span></div>
+          <div class="price-card-effective" id="priceDinnerEffective">Effective since Oct 1, 2025</div>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-bottom:16px;">
+        <div class="panel-head">
+          <div>
+            <div class="panel-title">Update Pricing</div>
+            <div class="panel-sub">Changes apply to all future deduction calculations immediately</div>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div class="form-grid">
+            <div class="form-field">
+              <label class="form-label">Lunch Price (৳)</label>
+              <input type="number" class="form-input" id="priceLunchInput" min="0" step="1" value="60" />
+            </div>
+            <div class="form-field">
+              <label class="form-label">Dinner Price (৳)</label>
+              <input type="number" class="form-input" id="priceDinnerInput" min="0" step="1" value="50" />
+            </div>
+            <div class="form-field full">
+              <label class="form-label">Note (optional)</label>
+              <input type="text" class="form-input" id="priceNoteInput" placeholder="e.g. Vendor rate increase — approved by Finance" />
+            </div>
+          </div>
+          <button class="btn btn-emerald" onclick="savePricing()">💾 Save Pricing</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-title">Pricing History</div>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Effective Date</th>
+                <th class="num">Lunch (৳)</th>
+                <th class="num">Dinner (৳)</th>
+                <th>Note</th>
+              </tr>
+            </thead>
+            <tbody id="priceHistoryBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <!-- ══════════════════════ /PAGE: MEAL PRICING ══════════════════ -->
+
+    <!-- ══════════════════════ PAGE: MONTHLY REPORTS ════════════════ -->
+    <div class="page" id="page-reports">
+      <div class="page-head">
+        <div>
+          <div class="page-head-title">Monthly Reports</div>
+          <div class="page-head-sub">Deduction summary, per employee, for any month — export or archive it</div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;">
+          <input type="month" class="form-input" id="reportMonthInput" onchange="renderReportsPage()" style="width:auto;" />
+          <button class="btn btn-ghost" onclick="exportReportCsv()">⬇️ Export CSV</button>
+          <button class="btn btn-primary" onclick="generateAndSaveReport()">⚡ Generate & Save</button>
+        </div>
+      </div>
+
+      <div class="kpi-grid">
+        <div class="kpi-card blue">
+          <div class="kpi-icon">👥</div>
+          <div class="kpi-label">Employees With Activity</div>
+          <div class="kpi-value"><span id="repEmpCount">0</span></div>
+          <div class="kpi-change" id="repMonthLabel1">—</div>
+        </div>
+        <div class="kpi-card green">
+          <div class="kpi-icon">🍱</div>
+          <div class="kpi-label">Total Lunches</div>
+          <div class="kpi-value"><span id="repLunchCount">0</span></div>
+          <div class="kpi-change">৳<span id="repLunchCost">0</span> total</div>
+        </div>
+        <div class="kpi-card amber">
+          <div class="kpi-icon">🌙</div>
+          <div class="kpi-label">Total Dinners</div>
+          <div class="kpi-value"><span id="repDinnerCount">0</span></div>
+          <div class="kpi-change">৳<span id="repDinnerCost">0</span> total</div>
+        </div>
+        <div class="kpi-card rose">
+          <div class="kpi-icon">৳</div>
+          <div class="kpi-label">Total Deduction</div>
+          <div class="kpi-value">৳<span id="repTotalCost">0</span></div>
+          <div class="kpi-change" id="repMonthLabel2">—</div>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-bottom:16px;">
+        <div class="panel-head">
+          <div>
+            <div class="panel-title">Per-Employee Breakdown</div>
+            <div class="panel-sub" id="repTableSub">Select a month above</div>
+          </div>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Employee</th>
+                <th>Department</th>
+                <th class="num">Present Days</th>
+                <th class="num">Lunches</th>
+                <th class="num">Dinners</th>
+                <th class="num">Lunch Cost</th>
+                <th class="num">Dinner Cost</th>
+                <th class="num">Total</th>
+              </tr>
+            </thead>
+            <tbody id="reportTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-title">Report Archive</div>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Month</th>
+                <th>Generated On</th>
+                <th class="num">Employees</th>
+                <th class="num">Total Deduction</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="reportArchiveBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <!-- ══════════════════════ /PAGE: MONTHLY REPORTS ═══════════════ -->
+
+    <!-- ══════════════════════ PAGE: SYNC DEVICES ═══════════════════ -->
+    <div class="page" id="page-syncdevices">
+      <div class="page-head">
+        <div>
+          <div class="page-head-title">Sync Devices</div>
+          <div class="page-head-sub">Biometric attendance & canteen machine connections</div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;">
+          <button class="btn btn-ghost" onclick="renderSyncDevicesPage()">↻ Refresh Status</button>
+          <button class="btn btn-primary" onclick="syncAllDevices()">🔄 Sync All Now</button>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-bottom:16px;padding:16px 20px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div>
+            <div style="font-weight:700;font-size:13.5px;margin-bottom:2px;">Backend Connection</div>
+            <div style="font-size:12px;color:var(--text-secondary);" id="syncBackendStatus">Checking backend…</div>
+          </div>
+          <span class="badge" id="syncBackendBadge">Checking…</span>
+        </div>
+      </div>
+
+      <div id="syncDeviceCards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-bottom:16px;"></div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <div class="panel-title">How device sync works</div>
+          </div>
+        </div>
+        <div style="padding:18px 20px;font-size:13px;color:var(--text-secondary);line-height:1.7;">
+          Each ZKTeco machine pushes attendance punches and canteen meal scans straight into Firestore via the bridge script —
+          new records appear here automatically within seconds, no manual action needed. Use <strong>Sync Now</strong> on a
+          device to pull the latest records immediately (useful right after connecting a new machine, or to confirm a device
+          is reachable). If the backend is unavailable, the dashboard falls back to local demo data and re-syncs automatically
+          once the connection is restored.
+        </div>
+      </div>
+    </div>
+    <!-- ══════════════════════ /PAGE: SYNC DEVICES ═══════════════════ -->
+
+    </main>
+  </div>
+</div>
+
+<!-- ── EMPLOYEE DETAIL MODAL ──────────────────────────────────── -->
+<div class="modal-overlay" id="detailModal" onclick="closeModal(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-head">
+      <div class="modal-title" id="modalTitle">Employee Detail</div>
+      <button class="modal-close" onclick="closeDetailModal()">×</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeDetailModal()">Close</button>
+      <button class="btn btn-primary" onclick="showToast('Individual report downloaded'); closeDetailModal()">Download PDF</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── GENERATE MODAL ─────────────────────────────────────────── -->
+<div class="modal-overlay" id="genModal" onclick="closeGenModal(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-head">
+      <div class="modal-title">Generate Monthly Report</div>
+      <button class="modal-close" onclick="closeGenModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <p style="color:var(--text-secondary);margin-bottom:20px;font-size:13px;">
+        This will run the full match algorithm across all employee attendance and canteen logs for the selected month, then aggregate deductions.
+      </p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;">
+        <div>
+          <div class="detail-lbl" style="margin-bottom:6px;">Year</div>
+          <select class="filter-sel" style="width:100%;">
+            <option>2025</option><option>2026</option>
+          </select>
+        </div>
+        <div>
+          <div class="detail-lbl" style="margin-bottom:6px;">Month</div>
+          <select class="filter-sel" style="width:100%;">
+            <option>October</option><option>September</option><option>August</option>
+          </select>
+        </div>
+      </div>
+      <div style="background:var(--amber-lt);border:1px solid #FDE68A;border-radius:6px;padding:12px;font-size:12px;color:#92400E;">
+        ⚠️ Generating a report for a month that already has a DRAFT will overwrite it. Finalized reports cannot be regenerated.
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeGenModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="runGenerate()">⚡ Run Now</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── EMPLOYEE ADD/EDIT MODAL ─────────────────────────────────── -->
+<div class="modal-overlay" id="empModal" onclick="closeEmpModal(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-head">
+      <div class="modal-title" id="empModalTitle">Add Employee</div>
+      <button class="modal-close" onclick="closeEmpModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="empEditIndex" value="-1" />
+      <div class="form-grid">
+        <div class="form-field">
+          <label class="form-label">Full Name</label>
+          <input type="text" class="form-input" id="empNameInput" placeholder="e.g. Rafiqul Islam" />
+        </div>
+        <div class="form-field">
+          <label class="form-label">Employee Code</label>
+          <input type="text" class="form-input" id="empCodeInput" placeholder="e.g. EMP-013" />
+        </div>
+        <div class="form-field">
+          <label class="form-label">Department</label>
+          <select class="form-select" id="empDeptInput">
+            <option>Engineering</option>
+            <option>HR</option>
+            <option>Finance</option>
+            <option>Operations</option>
+            <option>Sales</option>
+            <option>Admin</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label class="form-label">Join Date</label>
+          <input type="date" class="form-input" id="empJoinInput" />
+        </div>
+        <div class="form-field">
+          <label class="form-label">ZKTeco Device User ID</label>
+          <input type="text" class="form-input" id="empDeviceIdInput" placeholder="e.g. 17 (office attendance machine)" />
+        </div>
+        <div class="form-field">
+          <label class="form-label">ZKTeco Canteen Device User ID</label>
+          <input type="text" class="form-input" id="empCanteenDeviceIdInput" placeholder="Leave blank if same as above" />
+        </div>
+        <div class="form-field full" style="flex-direction:row;align-items:center;gap:10px;">
+          <label class="toggle">
+            <input type="checkbox" id="empActiveInput" checked />
+            <span class="toggle-track"></span>
+          </label>
+          <span class="form-label" style="margin:0;">Active employee</span>
+        </div>
+      </div>
+      <div class="form-hint">Employee records sync to Firestore automatically once a backend is connected.</div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeEmpModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEmployee()">💾 Save Employee</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── EMPLOYEE IMPORT PREVIEW MODAL ────────────────────────────── -->
+<div class="modal-overlay" id="empImportModal" onclick="closeEmpImportModal(event)">
+  <div class="modal" style="max-width:760px;" onclick="event.stopPropagation()">
+    <div class="modal-head">
+      <div class="modal-title">Import Employees — Preview</div>
+      <button class="modal-close" onclick="closeEmpImportModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:16px;">
+        <div class="kpi-card blue">
+          <div class="kpi-label">New Employees</div>
+          <div class="kpi-value"><span id="importNewCount">0</span></div>
+        </div>
+        <div class="kpi-card amber">
+          <div class="kpi-label">Existing (will update)</div>
+          <div class="kpi-value"><span id="importUpdateCount">0</span></div>
+        </div>
+        <div class="kpi-card rose">
+          <div class="kpi-label">Skipped (errors)</div>
+          <div class="kpi-value"><span id="importErrorCount">0</span></div>
+        </div>
+      </div>
+      <div style="max-height:340px;overflow-y:auto;overflow-x:auto;border:1px solid var(--rule);border-radius:var(--radius);">
+        <table class="data-table" style="margin:0;">
+          <thead>
+            <tr>
+              <th>Row</th>
+              <th>Name</th>
+              <th>Code</th>
+              <th>Department</th>
+              <th>Status</th>
+              <th>Note</th>
+            </tr>
+          </thead>
+          <tbody id="importPreviewBody"></tbody>
+        </table>
+      </div>
+      <div class="form-hint" style="margin-top:10px;">Rows matched by Employee Code will update the existing record (name, department, device IDs, etc). Rows with a new code will be added. Rows marked "Skipped" need a Name and Employee Code to be imported.</div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeEmpImportModal()">Cancel</button>
+      <button class="btn btn-primary" id="importConfirmBtn" onclick="confirmEmpImport()">✅ Confirm Import</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── CANTEEN LOG ADD MODAL ────────────────────────────────────── -->
+<div class="modal-overlay" id="logModal" onclick="closeLogModal(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-head">
+      <div class="modal-title">Add Manual Canteen Log</div>
+      <button class="modal-close" onclick="closeLogModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-field full">
+          <label class="form-label">Employee</label>
+          <select class="form-select" id="logEmpInput"></select>
+        </div>
+        <div class="form-field">
+          <label class="form-label">Meal</label>
+          <select class="form-select" id="logMealInput">
+            <option>Lunch</option>
+            <option>Dinner</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label class="form-label">Date & Time</label>
+          <input type="datetime-local" class="form-input" id="logTimeInput" />
+        </div>
+        <div class="form-field full">
+          <label class="form-label">Device</label>
+          <select class="form-select" id="logDeviceInput">
+            <option>Canteen Machine — Zone A</option>
+            <option>Manual Entry (HR)</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-hint">Manual entries are marked "Matched" and included in the next report generation.</div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeLogModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveLog()">💾 Add Log</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── ATTENDANCE MANUAL ENTRY MODAL ────────────────────────────── -->
+<div class="modal-overlay" id="attModal" onclick="closeAttModal(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-head">
+      <div class="modal-title">Add Manual Attendance Entry</div>
+      <button class="modal-close" onclick="closeAttModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-field full">
+          <label class="form-label">Employee</label>
+          <select class="form-select" id="attEmpInput"></select>
+        </div>
+        <div class="form-field">
+          <label class="form-label">Date</label>
+          <input type="date" class="form-input" id="attDateInput" />
+        </div>
+        <div class="form-field">
+          <label class="form-label">Status</label>
+          <select class="form-select" id="attStatusInput">
+            <option>Present</option>
+            <option>Late</option>
+            <option>Absent</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label class="form-label">Check-in</label>
+          <input type="time" class="form-input" id="attInTimeInput" />
+        </div>
+        <div class="form-field">
+          <label class="form-label">Check-out</label>
+          <input type="time" class="form-input" id="attOutTimeInput" />
+        </div>
+      </div>
+      <div class="form-hint">Use this for missed punches (device offline, forgotten card, etc). Leave times blank for an Absent entry.</div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeAttModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveAttendance()">💾 Add Entry</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── TOAST ──────────────────────────────────────────────────── -->
+<div class="toast" id="toast">
+  <span class="toast-icon">✓</span>
+  <span id="toastMsg"></span>
+</div>
+
+<!-- ── FIREBASE (Firestore backend) ─────────────────────────────
+     Replace firebaseConfig below with your project's config from the
+     Firebase Console → Project Settings → General → Your apps.
+     Until valid keys are supplied, the app runs entirely on local
+     in-memory demo data and every feature above still works. ─────── -->
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+const firebaseConfig = {
+  apiKey:            "AIzaSyDAw1QeBCRm5PL_KpaJ20hBtT14glknDWE",
+  authDomain:        "canteenmanagement-7dcd5.firebaseapp.com",
+  projectId:         "canteenmanagement-7dcd5",
+  storageBucket:     "canteenmanagement-7dcd5.firebasestorage.app",
+  messagingSenderId: "404867857024",
+  appId:             "1:404867857024:web:9f428bbfd6c0453aee0465",
+};
+
+let db = null;
+let firebaseReady = false;
+
+function isConfigPlaceholder() {
+  return !firebaseConfig.apiKey || firebaseConfig.apiKey === "YOUR_API_KEY";
+}
+
+async function initFirebase() {
+  const dot = document.getElementById('fbDot');
+  const label = document.getElementById('fbLabel');
+  if (isConfigPlaceholder()) {
+    dot.className = 'conn-dot offline';
+    label.textContent = 'Demo data (no backend)';
+    return;
+  }
+  try {
+    firebase.initializeApp(firebaseConfig);
+    db = firebase.firestore();
+    // Quick connectivity check (read)
+    await db.collection('_health').limit(1).get();
+
+    // Also verify WRITE permission — a read-only security rule would pass
+    // the check above but silently block every save (employees, imports,
+    // logs, pricing, etc), which is a common cause of "data doesn't save"
+    // even though the status shows "connected".
+    let canWrite = true;
+    try {
+      await db.collection('_health').doc('_writecheck').set({ ts: Date.now() }, { merge: true });
+    } catch (writeErr) {
+      canWrite = false;
+      console.error('Firestore WRITE check failed — reads work but writes are blocked. Check your Firestore Security Rules for the employees/canteenLogs/attendanceLogs/settings/monthlyReports collections:', writeErr);
+    }
+
+    firebaseReady = true;
+    dot.className = canWrite ? 'conn-dot online' : 'conn-dot offline';
+    label.textContent = canWrite ? 'Firebase connected' : 'Connected (READ-ONLY — writes blocked, check Firestore rules)';
+    if (!canWrite) {
+      showToast('⚠️ Firebase is read-only for this app — imports/edits will NOT be saved. Check Firestore Security Rules.');
+    }
+    await loadFromFirestore();
+  } catch (err) {
+    console.error('Firebase init failed:', err);
+    dot.className = 'conn-dot offline';
+    label.textContent = 'Backend unreachable — using demo data';
+  }
+}
+
+// Live-sync employees / logs / pricing from Firestore. Falls back to
+// whatever is already in memory (the seeded demo data) on any error.
+// Using onSnapshot (not a one-time get) means data pushed in by the
+// ZKTeco bridge script or canteen device shows up here within seconds,
+// with no page refresh needed.
+function loadFromFirestore() {
+  db.collection('employees').onSnapshot(snap => {
+    if (!snap.empty) {
+      EMPLOYEES.length = 0;
+      snap.forEach(doc => EMPLOYEES.push({ id: doc.id, ...doc.data() }));
+      refreshAllViews();
+    }
+  }, err => console.error('employees listener failed:', err));
+
+  db.collection('canteenLogs').orderBy('ts', 'desc').limit(500)
+    .onSnapshot(snap => {
+      if (!snap.empty) {
+        CANTEEN_LOGS.length = 0;
+        snap.forEach(doc => CANTEEN_LOGS.push({ id: doc.id, ...doc.data() }));
+        renderLogTable(CANTEEN_LOGS);
+        markLiveSync();
+      }
+    }, err => console.error('canteenLogs listener failed:', err));
+
+  db.collection('attendanceLogs').orderBy('date', 'desc').limit(500)
+    .onSnapshot(snap => {
+      if (!snap.empty) {
+        ATTENDANCE_LOGS.length = 0;
+        snap.forEach(doc => ATTENDANCE_LOGS.push({ id: doc.id, ...doc.data() }));
+        renderAttTable(ATTENDANCE_LOGS);
+        markLiveSync();
+      }
+    }, err => console.error('attendanceLogs listener failed:', err));
+
+  db.collection('settings').doc('mealPricing').onSnapshot(doc => {
+    if (doc.exists) {
+      const d = doc.data();
+      LUNCH_PRICE = d.lunch ?? LUNCH_PRICE;
+      DINNER_PRICE = d.dinner ?? DINNER_PRICE;
+      if (Array.isArray(d.history)) PRICE_HISTORY = d.history;
+      renderPricing();
+    }
+  }, err => console.error('pricing listener failed:', err));
+
+  db.collection('monthlyReports').orderBy('generatedAt', 'desc').limit(100)
+    .onSnapshot(snap => {
+      REPORTS.length = 0;
+      snap.forEach(doc => REPORTS.push({ id: doc.id, ...doc.data() }));
+      renderReportArchive();
+    }, err => console.error('monthlyReports listener failed:', err));
+}
+
+function markLiveSync() {
+  const label = document.getElementById('fbLabel');
+  if (label) {
+    const stamp = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    label.textContent = `Synced ${stamp}`;
+    setTimeout(() => { if (firebaseReady) label.textContent = 'Firebase connected'; }, 4000);
+  }
+  initDeviceSyncTimes();
+  renderSyncDevicesPage();
+}
+
+async function fsSaveEmployee(emp) {
+  if (!firebaseReady) {
+    console.warn('fsSaveEmployee skipped — Firebase not connected, data is local-only and will be lost on refresh.');
+    return false;
+  }
+  try {
+    if (emp.id) {
+      await db.collection('employees').doc(emp.id).set(emp, { merge: true });
+    } else {
+      const ref = await db.collection('employees').add(emp);
+      emp.id = ref.id; // capture the real DB id so future edits/deletes hit the right doc
+    }
+    return true;
+  } catch (err) {
+    console.error('Save employee failed:', err);
+    return false;
+  }
+}
+async function fsDeleteEmployee(emp) {
+  if (!firebaseReady || !emp.id) return;
+  try { await db.collection('employees').doc(emp.id).delete(); }
+  catch (err) { console.error('Delete employee failed:', err); }
+}
+async function fsSaveAttendance(entry) {
+  if (!firebaseReady) return;
+  try {
+    if (entry.id && !entry.id.startsWith('ATT-')) {
+      await db.collection('attendanceLogs').doc(entry.id).set(entry, { merge: true });
+    } else {
+      const ref = await db.collection('attendanceLogs').add(entry);
+      entry.id = ref.id;
+    }
+  } catch (err) { console.error('Save attendance failed:', err); }
+}
+async function fsDeleteAttendance(entry) {
+  if (!firebaseReady || !entry.id) return;
+  try {
+    const realId = entry.id.startsWith('ATT-') ? null : entry.id;
+    if (realId) await db.collection('attendanceLogs').doc(realId).delete();
+  } catch (err) { console.error('Delete attendance failed:', err); }
+}
+async function fsSaveLog(log) {
+  if (!firebaseReady) return;
+  try {
+    if (log.id && !log.id.startsWith('LOG-')) {
+      await db.collection('canteenLogs').doc(log.id).set(log, { merge: true });
+    } else {
+      const ref = await db.collection('canteenLogs').add(log);
+      log.id = ref.id;
+    }
+  } catch (err) { console.error('Save log failed:', err); }
+}
+async function fsDeleteLog(log) {
+  if (!firebaseReady || !log.id) return;
+  try {
+    const realId = log.id.startsWith('LOG-') ? null : log.id;
+    if (realId) await db.collection('canteenLogs').doc(realId).delete();
+  } catch (err) { console.error('Delete log failed:', err); }
+}
+async function fsSaveReport(report) {
+  if (!firebaseReady) return;
+  try { await db.collection('monthlyReports').doc(report.id).set(report, { merge: true }); }
+  catch (err) { console.error('Save report failed:', err); }
+}
+async function fsDeleteReport(report) {
+  if (!firebaseReady || !report.id) return;
+  try { await db.collection('monthlyReports').doc(report.id).delete(); }
+  catch (err) { console.error('Delete report failed:', err); }
+}
+async function fsSavePricing() {
+  if (!firebaseReady) return;
+  try {
+    await db.collection('settings').doc('mealPricing').set({
+      lunch: LUNCH_PRICE, dinner: DINNER_PRICE, history: PRICE_HISTORY,
+    });
+  } catch (err) { console.error('Save pricing failed:', err); }
+}
+</script>
+
+<script>
+// ── DATA ────────────────────────────────────────────────────────
+const EMPLOYEES = [
+  { code:'EMP-001', name:'Rafiqul Islam',    dept:'Engineering', present:22, lunch:20, dinner:14, color:'#1E3A5F' },
+  { code:'EMP-002', name:'Nasrin Begum',     dept:'HR',          present:21, lunch:21, dinner:0,  color:'#059669' },
+  { code:'EMP-003', name:'Karim Uddin',      dept:'Finance',     present:20, lunch:18, dinner:9,  color:'#7C3AED' },
+  { code:'EMP-004', name:'Sumaiya Akter',    dept:'Operations',  present:23, lunch:23, dinner:18, color:'#DC2626' },
+  { code:'EMP-005', name:'Jahangir Alam',    dept:'Sales',       present:19, lunch:17, dinner:12, color:'#D97706' },
+  { code:'EMP-006', name:'Taslima Khanam',   dept:'Admin',       present:22, lunch:20, dinner:7,  color:'#0284C7' },
+  { code:'EMP-007', name:'Monirul Haque',    dept:'Engineering', present:20, lunch:19, dinner:15, color:'#1E3A5F' },
+  { code:'EMP-008', name:'Roksana Parvin',   dept:'HR',          present:21, lunch:18, dinner:4,  color:'#059669' },
+  { code:'EMP-009', name:'Shahadat Hossain', dept:'Finance',     present:18, lunch:16, dinner:10, color:'#7C3AED' },
+  { code:'EMP-010', name:'Anika Rahman',     dept:'Operations',  present:22, lunch:22, dinner:20, color:'#DC2626' },
+  { code:'EMP-011', name:'Billal Hossain',   dept:'Sales',       present:15, lunch:13, dinner:8,  color:'#D97706' },
+  { code:'EMP-012', name:'Fahima Sultana',   dept:'Engineering', present:23, lunch:23, dinner:16, color:'#1E3A5F' },
+];
+
+let LUNCH_PRICE  = 60;
+let DINNER_PRICE = 50;
+
+let PRICE_HISTORY = [
+  { date: 'Oct 1, 2025', lunch: 60, dinner: 50, note: 'Initial rate for FY25' },
+];
+
+// ── ATTENDANCE LOGS (office biometric check-in/check-out) ────────
+let ATTENDANCE_LOGS = [];
+function seedAttendanceLogs() {
+  const logs = [];
+  let id = 1;
+  const today = new Date();
+  for (let dayOffset = 6; dayOffset >= 0; dayOffset--) {
+    const day = new Date(today);
+    day.setDate(today.getDate() - dayOffset);
+    if (day.getDay() === 0 || day.getDay() === 6) continue; // skip weekend
+    EMPLOYEES.forEach(e => {
+      const r = Math.random();
+      const status = r < .84 ? 'Present' : r < .94 ? 'Late' : 'Absent';
+      let inTime = null, outTime = null;
+      if (status !== 'Absent') {
+        const inHour = status === 'Late' ? 9 + (Math.random() < .5 ? 0 : 1) : 8 + Math.floor(Math.random() * 2);
+        const inMinute = status === 'Late' ? 31 + Math.floor(Math.random() * 25) : Math.floor(Math.random() * 60);
+        inTime = new Date(day.getFullYear(), day.getMonth(), day.getDate(), inHour, inMinute % 60);
+        const outHour = 17 + Math.floor(Math.random() * 3);
+        const outMinute = Math.floor(Math.random() * 60);
+        outTime = new Date(day.getFullYear(), day.getMonth(), day.getDate(), outHour, outMinute);
+      }
+      logs.push({
+        id: 'ATT-' + String(id++).padStart(5, '0'),
+        empCode: e.code,
+        empName: e.name,
+        dept: e.dept,
+        date: day.toISOString().slice(0, 10),
+        inTime: inTime ? inTime.toISOString() : null,
+        outTime: outTime ? outTime.toISOString() : null,
+        status,
+      });
+    });
+  }
+  ATTENDANCE_LOGS = logs.sort((a, b) => b.date.localeCompare(a.date));
+}
+
+// ── CANTEEN LOGS (raw scan data feeding the deduction table) ─────
+let CANTEEN_LOGS = [];
+function seedCanteenLogs() {
+  const device = 'Canteen Machine — Zone A';
+  const logs = [];
+  let id = 1;
+  const today = new Date();
+  for (let dayOffset = 6; dayOffset >= 0; dayOffset--) {
+    const day = new Date(today);
+    day.setDate(today.getDate() - dayOffset);
+    if (day.getDay() === 0 || day.getDay() === 6) continue; // skip weekend
+    EMPLOYEES.forEach((e, idx) => {
+      const r = Math.random();
+      const meals = r < .55 ? ['Lunch'] : r < .8 ? ['Lunch', 'Dinner'] : r < .92 ? ['Dinner'] : [];
+      meals.forEach(meal => {
+        const hour = meal === 'Lunch' ? 12 + Math.floor(Math.random() * 2) : 19 + Math.floor(Math.random() * 2);
+        const minute = Math.floor(Math.random() * 60);
+        const ts = new Date(day.getFullYear(), day.getMonth(), day.getDate(), hour, minute);
+        const unmatched = Math.random() < .04;
+        logs.push({
+          id: 'LOG-' + String(id++).padStart(5, '0'),
+          empCode: e.code,
+          empName: e.name,
+          meal,
+          device,
+          ts: ts.toISOString(),
+          status: unmatched ? 'Unmatched' : 'Matched',
+        });
+      });
+    });
+  }
+  // A few manual/unmatched entries with no employee match
+  logs.push({ id: 'LOG-'+String(id++).padStart(5,'0'), empCode: '—', empName: 'Unrecognized Card 0x7F2A', meal: 'Lunch', device, ts: new Date().toISOString(), status: 'Unmatched' });
+  CANTEEN_LOGS = logs.sort((a, b) => new Date(b.ts) - new Date(a.ts));
+}
+
+// ── DASHBOARD STATE ──────────────────────────────────────────────
+let dashboardMonthRows = [];   // all employees, current month (includeAll = true)
+let dashboardWorkingDays = 1;  // distinct days with any activity this month
+
+function defaultMonthStr() {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+}
+
+function onDashboardMonthChange() { renderDashboardPage(); }
+
+function renderDashboardPage() {
+  const input = document.getElementById('topbarMonthPicker');
+  if (!input.value) input.value = defaultMonthStr();
+  const monthStr = input.value;
+  const label = monthLabel(monthStr);
+
+  document.getElementById('topbarTitle').textContent = label;
+  document.getElementById('chartSub').textContent = `${label} — Lunch vs Dinner`;
+  document.getElementById('tableSub').textContent = `${label} — matched from attendance & canteen logs`;
+
+  const rows = computeMonthlyReport(monthStr, true);
+  dashboardMonthRows = rows;
+  const activeRows = rows.filter(r => r.present > 0 || r.lunch > 0 || r.dinner > 0);
+
+  const daySet = new Set([
+    ...ATTENDANCE_LOGS.filter(a => a.date.startsWith(monthStr)).map(a => a.date),
+    ...CANTEEN_LOGS.filter(l => l.ts.startsWith(monthStr)).map(l => l.ts.slice(0, 10)),
+  ]);
+  dashboardWorkingDays = daySet.size || 1;
+
+  const totalLunch = rows.reduce((s, r) => s + r.lunch, 0);
+  const totalDinner = rows.reduce((s, r) => s + r.dinner, 0);
+  const totalCost = rows.reduce((s, r) => s + r.total, 0);
+
+  document.getElementById('dashActiveEmp').textContent = activeRows.length;
+  document.getElementById('dashActiveEmpSub').textContent = `of ${EMPLOYEES.length} total on roster`;
+  document.getElementById('dashTotalLunch').textContent = totalLunch.toLocaleString();
+  document.getElementById('dashLunchAvg').textContent = `Avg ${(totalLunch / dashboardWorkingDays).toFixed(1)} / active day`;
+  document.getElementById('dashTotalDinner').textContent = totalDinner.toLocaleString();
+  document.getElementById('dashDinnerAvg').textContent = `Avg ${(totalDinner / dashboardWorkingDays).toFixed(1)} / active day`;
+  document.getElementById('dashTotalDeduction').textContent = totalCost.toLocaleString();
+  document.getElementById('dashDeductionSub').textContent = label;
+  document.getElementById('dashWorkingDays').textContent = dashboardWorkingDays;
+  document.getElementById('dashAvgPerEmp').textContent = `৳ ${activeRows.length ? Math.round(totalCost / activeRows.length).toLocaleString() : 0}`;
+
+  const existingReport = REPORTS.find(r => r.month === monthStr);
+  const badge = document.getElementById('dashStatusBadge');
+  badge.textContent = existingReport && existingReport.status === 'Finalized' ? 'FINALIZED' : 'DRAFT';
+  badge.className = 'badge ' + (existingReport && existingReport.status === 'Finalized' ? 'badge-green' : 'badge-amber');
+
+  renderChart(monthStr);
+  renderDepts(rows);
+  filterTable();
+}
+
+// ── CHART ───────────────────────────────────────────────────────
+function renderChart(monthStr) {
+  monthStr = monthStr || (document.getElementById('topbarMonthPicker').value || defaultMonthStr());
+  const dayMap = {};
+  CANTEEN_LOGS.filter(l => l.ts.startsWith(monthStr) && isCanteenLogBillable(l)).forEach(l => {
+    const day = l.ts.slice(0, 10);
+    if (!dayMap[day]) dayMap[day] = { l: 0, dn: 0 };
+    if (l.meal === 'Lunch') dayMap[day].l++; else dayMap[day].dn++;
+  });
+  const days = Object.keys(dayMap).sort();
+  const el = document.getElementById('barChart');
+  if (!days.length) {
+    el.innerHTML = `<div class="form-hint" style="padding:24px 4px;">No canteen scans recorded for ${monthLabel(monthStr)} yet.</div>`;
+    return;
+  }
+  const max = Math.max(...days.map(d => dayMap[d].l + dayMap[d].dn), 1);
+  el.innerHTML = days.map(day => {
+    const d = new Date(day + 'T00:00:00');
+    const label = d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric' });
+    const { l, dn } = dayMap[day];
+    return `
+      <div class="bar-group">
+        <div class="bar lunch"  style="height:${(l / max * 110)}px" title="Lunch: ${l}"></div>
+        <div class="bar dinner" style="height:${(dn / max * 110)}px" title="Dinner: ${dn}"></div>
+        <span class="bar-day">${label}</span>
+      </div>
+    `;
+  }).join('');
+}
+
+// ── DEPT BREAKDOWN ───────────────────────────────────────────────
+function renderDepts(rows) {
+  rows = rows || dashboardMonthRows;
+  const depts = {};
+  rows.forEach(r => { depts[r.dept] = (depts[r.dept] || 0) + r.total; });
+  const entries = Object.entries(depts).filter(([, total]) => total > 0);
+  if (!entries.length) {
+    document.getElementById('deptList').innerHTML = `<div class="form-hint">No department activity this month yet.</div>`;
+    return;
+  }
+  const sorted = entries.sort((a, b) => b[1] - a[1]);
+  const max = sorted[0][1] || 1;
+  document.getElementById('deptList').innerHTML = sorted.map(([dept, total]) => `
+    <div class="dept-row">
+      <div class="dept-info">
+        <span class="dept-name">${dept}</span>
+        <span class="dept-amount">৳ ${total.toLocaleString()}</span>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" style="width:${(total / max * 100).toFixed(1)}%"></div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ── TABLE ────────────────────────────────────────────────────────
+function renderTable(rows) {
+  const activeThreshold = Math.max(1, Math.ceil(dashboardWorkingDays * 0.6));
+  document.getElementById('tableBody').innerHTML = rows.length ? rows.map((r, i) => {
+    const isActive = r.present >= activeThreshold;
+    return `
+      <tr>
+        <td>${i + 1}</td>
+        <td>
+          <div class="emp-cell">
+            <div class="emp-avatar" style="background:${r.color || '#1E3A5F'}">${r.name.split(' ').map(x=>x[0]).join('').slice(0,2)}</div>
+            <div>
+              <div class="emp-name" style="cursor:pointer;" onclick="openDetail('${r.code}')">${r.name}</div>
+              <div class="emp-code">${r.code}</div>
+            </div>
+          </div>
+        </td>
+        <td>${r.dept}</td>
+        <td class="num mono">${r.present}</td>
+        <td class="num mono">${r.lunch}</td>
+        <td class="num mono">${r.dinner}</td>
+        <td class="num mono">${r.lunchCost.toLocaleString()}</td>
+        <td class="num mono">${r.dinnerCost.toLocaleString()}</td>
+        <td class="num mono" style="font-weight:700;">৳ ${r.total.toLocaleString()}</td>
+        <td><span class="badge ${isActive ? 'badge-green' : 'badge-amber'}">${isActive ? 'ACTIVE' : 'PARTIAL'}</span></td>
+        <td>
+          <button class="btn btn-ghost btn-sm" onclick="openDetail('${r.code}')">View</button>
+        </td>
+      </tr>
+    `;
+  }).join('') : `<tr><td colspan="11"><div class="empty-state"><div class="empty-state-icon">📋</div><div class="empty-state-title">No employees match</div><div class="empty-state-sub">Try clearing filters.</div></div></td></tr>`;
+
+  const grand = rows.reduce((s, r) => s + r.total, 0);
+  document.getElementById('dashGrandTotal').textContent = grand.toLocaleString();
+}
+
+function filterTable() {
+  const q      = document.getElementById('searchInput').value.toLowerCase();
+  const dept   = document.getElementById('deptFilter').value;
+  const status = document.getElementById('statusFilter').value;
+  const activeThreshold = Math.max(1, Math.ceil(dashboardWorkingDays * 0.6));
+  const filtered = dashboardMonthRows.filter(r => {
+    const isActive = r.present >= activeThreshold;
+    return (!q || r.name.toLowerCase().includes(q) || r.code.toLowerCase().includes(q)) &&
+      (!dept || r.dept === dept) &&
+      (!status || (status === 'Active' ? isActive : !isActive));
+  });
+  renderTable(filtered);
+}
+
+// ── RUN MATCHING ─────────────────────────────────────────────────
+function runMatching() {
+  const monthStr = document.getElementById('topbarMonthPicker').value || defaultMonthStr();
+  const canteenInMonth = CANTEEN_LOGS.filter(l => l.ts.startsWith(monthStr));
+  const attInMonth = ATTENDANCE_LOGS.filter(a => a.date.startsWith(monthStr));
+
+  const matched = canteenInMonth.filter(l => l.status === 'Matched').length;
+  const unmatched = canteenInMonth.filter(l => l.status === 'Unmatched').length;
+
+  // Of the "Matched" scans (employee ID recognized), only the ones with a
+  // same-day attendance in-time actually get billed.
+  const billable = canteenInMonth.filter(l => isCanteenLogBillable(l)).length;
+  const noAttendanceButAte = matched - billable;
+
+  document.getElementById('tlSyncedDesc').textContent =
+    `${attInMonth.length + canteenInMonth.length} records pulled this month (${attInMonth.length} attendance, ${canteenInMonth.length} canteen)`;
+  document.getElementById('tlMatchDesc').textContent =
+    `${billable} billable · ${unmatched} unmatched` + (noAttendanceButAte ? ` · ${noAttendanceButAte} ate with no attendance record (not billed)` : '');
+  document.querySelectorAll('#workflowTimeline .tl-item')[0].querySelector('.tl-dot').outerHTML = `<div class="tl-dot" style="background:var(--emerald-lt);">✅</div>`;
+  document.querySelectorAll('#workflowTimeline .tl-item')[0].querySelector('.tl-title').style.color = '';
+  document.querySelectorAll('#workflowTimeline .tl-item')[1].querySelector('.tl-dot').outerHTML = `<div class="tl-dot" style="background:var(--amber-lt);">🕐</div>`;
+  document.querySelectorAll('#workflowTimeline .tl-item')[1].querySelector('.tl-title').style.color = '';
+
+  renderDashboardPage();
+  renderLogTable(CANTEEN_LOGS);
+  showToast(`🔄 Matching complete — ${billable} billable, ${unmatched} unmatched, ${noAttendanceButAte} not billed (no attendance)`);
+}
+
+// ── EXPORTS ──────────────────────────────────────────────────────
+function exportDashboardExcel() {
+  const monthStr = document.getElementById('topbarMonthPicker').value || defaultMonthStr();
+  if (!dashboardMonthRows.length) { showToast('⚠️ Nothing to export'); return; }
+  const csv = reportRowsToCsv(monthStr, dashboardMonthRows);
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `canteen-deduction-dashboard-${monthStr}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('⬇️ Excel-compatible CSV downloaded');
+}
+
+function exportDashboardPdf() {
+  showToast('🖨️ Opening print dialog — choose "Save as PDF" as the destination');
+  setTimeout(() => window.print(), 300);
+}
+
+// ── FINALIZE TO PAYROLL ──────────────────────────────────────────
+function finalizeToPayroll() {
+  const monthStr = document.getElementById('topbarMonthPicker').value || defaultMonthStr();
+  if (!dashboardMonthRows.some(r => r.total > 0)) {
+    showToast('⚠️ Nothing to finalize for this month');
+    return;
+  }
+  let report = REPORTS.find(r => r.month === monthStr);
+  const rows = dashboardMonthRows.filter(r => r.present > 0 || r.lunch > 0 || r.dinner > 0);
+  const totalCost = rows.reduce((s, r) => s + r.total, 0);
+  if (report) {
+    report.rows = rows; report.empCount = rows.length; report.totalCost = totalCost;
+    report.status = 'Finalized'; report.finalizedAt = new Date().toISOString();
+  } else {
+    report = {
+      id: 'RPT-' + Date.now(), month: monthStr, monthLabel: monthLabel(monthStr),
+      generatedAt: new Date().toISOString(), finalizedAt: new Date().toISOString(),
+      empCount: rows.length, totalCost, rows, status: 'Finalized',
+    };
+    REPORTS = REPORTS.filter(r => r.month !== monthStr);
+    REPORTS.unshift(report);
+  }
+  fsSaveReport(report);
+  renderReportArchive();
+
+  document.querySelectorAll('#workflowTimeline .tl-item').forEach(item => {
+    item.querySelector('.tl-dot').outerHTML = `<div class="tl-dot" style="background:var(--emerald-lt);">✅</div>`;
+    item.querySelector('.tl-title').style.color = '';
+  });
+  document.getElementById('tlPayrollDesc').textContent = `Sent to payroll on ${new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})} — ৳${totalCost.toLocaleString()} across ${rows.length} employees`;
+
+  renderDashboardPage();
+  showToast('✅ Report finalized and sent to Payroll');
+}
+
+// ── DETAIL MODAL ─────────────────────────────────────────────────
+function openDetail(idOrIdx) {
+  const e = typeof idOrIdx === 'number' ? EMPLOYEES[idOrIdx] : EMPLOYEES.find(x => x.code === idOrIdx);
+  if (!e) { showToast('⚠️ Employee not found'); return; }
+
+  const monthRow = dashboardMonthRows.find(r => r.code === e.code);
+  const present    = monthRow ? monthRow.present : (e.present || 0);
+  const lunchCount = monthRow ? monthRow.lunch   : (e.lunch   || 0);
+  const dinnerCount= monthRow ? monthRow.dinner  : (e.dinner  || 0);
+  const lunchCost  = lunchCount  * LUNCH_PRICE;
+  const dinnerCost = dinnerCount * DINNER_PRICE;
+  const total      = lunchCost + dinnerCost;
+  const monthStr = document.getElementById('topbarMonthPicker').value || defaultMonthStr();
+
+  // ── Build a real per-day picture from ATTENDANCE_LOGS + CANTEEN_LOGS ──
+  const attByDate = {};
+  ATTENDANCE_LOGS.filter(a => a.empCode === e.code).forEach(a => { attByDate[a.date] = a; });
+
+  const canteenByDate = {}; // date -> { lunch: bool, dinner: bool, lunchTime, dinnerTime }
+  CANTEEN_LOGS.filter(l => l.empCode === e.code).forEach(l => {
+    const day = l.ts.slice(0, 10);
+    if (!canteenByDate[day]) canteenByDate[day] = {};
+    canteenByDate[day][l.meal.toLowerCase()] = true;
+    canteenByDate[day][l.meal.toLowerCase() + 'Time'] = l.ts;
+  });
+
+  // Union of every date we have any record for, so real data (whatever
+  // range the bridge has synced) always shows, even outside "this month".
+  const allDates = new Set([...Object.keys(attByDate), ...Object.keys(canteenByDate)]);
+  const sortedDates = [...allDates].sort();
+
+  const dayCells = sortedDates.map(date => {
+    const att = attByDate[date];
+    const meals = canteenByDate[date] || {};
+    const d = new Date(date + 'T00:00:00');
+    const label = d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+
+    let type;
+    if (att && att.status === 'Absent') type = 'absent';
+    else if (meals.lunch && meals.dinner) type = 'both';
+    else if (meals.lunch) type = 'lunch';
+    else if (meals.dinner) type = 'dinner';
+    else if (att) type = 'present';
+    else type = 'absent';
+
+    const lateCls = att && att.status === 'Late' ? ' late' : '';
+    const tip = [
+      label,
+      att ? `Attendance: ${att.status} (in ${fmtTime(att.inTime)}, out ${fmtTime(att.outTime)})` : 'No attendance record',
+      meals.lunch ? `Lunch: ${fmtTime(meals.lunchTime)}` : 'No lunch',
+      meals.dinner ? `Dinner: ${fmtTime(meals.dinnerTime)}` : 'No dinner',
+    ].join(' · ');
+
+    return `<div class="day-cell ${type}${lateCls}" title="${tip}">${d.getDate()}</div>`;
+  }).join('');
+
+  const rangeLabel = sortedDates.length
+    ? `${new Date(sortedDates[0]+'T00:00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'short'})} – ${new Date(sortedDates[sortedDates.length-1]+'T00:00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'short'})}`
+    : 'No synced records yet';
+
+  document.getElementById('modalTitle').textContent = `${e.name} — Attendance & Meal History`;
+  document.getElementById('modalBody').innerHTML = `
+    <div class="detail-grid">
+      <div class="detail-cell">
+        <div class="detail-lbl">Employee Code</div>
+        <div class="detail-val">${e.code}</div>
+      </div>
+      <div class="detail-cell">
+        <div class="detail-lbl">Department</div>
+        <div class="detail-val">${e.dept}</div>
+      </div>
+      <div class="detail-cell">
+        <div class="detail-lbl">Present Days (${monthLabel(monthStr)})</div>
+        <div class="detail-val">${present}</div>
+      </div>
+      <div class="detail-cell">
+        <div class="detail-lbl">Total Deduction (${monthLabel(monthStr)})</div>
+        <div class="detail-val" style="color:var(--rose)">৳ ${total.toLocaleString()}</div>
+      </div>
+      <div class="detail-cell">
+        <div class="detail-lbl">Lunches × ৳${LUNCH_PRICE}</div>
+        <div class="detail-val">${lunchCount} × = ৳${lunchCost.toLocaleString()}</div>
+      </div>
+      <div class="detail-cell">
+        <div class="detail-lbl">Dinners × ৳${DINNER_PRICE}</div>
+        <div class="detail-val">${dinnerCount} × = ৳${dinnerCost.toLocaleString()}</div>
+      </div>
+    </div>
+    <div class="detail-lbl" style="margin-bottom:8px;">Day-by-Day Log — ${rangeLabel}</div>
+    <div class="day-log">
+      ${dayCells || '<div class="form-hint">No attendance or canteen records synced for this employee yet.</div>'}
+    </div>
+    <div class="day-legend">
+      <div class="day-leg-item"><div class="day-leg-swatch" style="background:var(--navy)"></div> Both meals</div>
+      <div class="day-leg-item"><div class="day-leg-swatch" style="background:var(--emerald-lt);border:1px solid #6EE7B7"></div> Lunch only</div>
+      <div class="day-leg-item"><div class="day-leg-swatch" style="background:var(--blue-lt);border:1px solid #93C5FD"></div> Dinner only</div>
+      <div class="day-leg-item"><div class="day-leg-swatch" style="background:var(--white);border:1px solid var(--steel)"></div> Present, no meal</div>
+      <div class="day-leg-item"><div class="day-leg-swatch" style="background:var(--rule)"></div> Absent</div>
+      <div class="day-leg-item"><div class="day-leg-swatch" style="background:var(--amber);border-radius:50%;width:8px;height:8px;"></div> Late check-in</div>
+    </div>
+  `;
+
+  document.getElementById('detailModal').classList.add('open');
+}
+
+function closeDetailModal() { document.getElementById('detailModal').classList.remove('open'); }
+function closeModal(e) { if(e.target === document.getElementById('detailModal')) closeDetailModal(); }
+
+// ── GENERATE MODAL ───────────────────────────────────────────────
+function openGenModal()  { document.getElementById('genModal').classList.add('open'); }
+function closeGenModal(e) {
+  if (!e || e.target === document.getElementById('genModal'))
+    document.getElementById('genModal').classList.remove('open');
+}
+function runGenerate() {
+  closeGenModal();
+  const monthInput = document.getElementById('reportMonthInput');
+  if (monthInput) monthInput.value = currentReportMonth() || monthInput.value;
+  generateAndSaveReport();
+  showPage('reports', document.querySelector('.nav-item[onclick*="reports"]'));
+}
+
+// ── TOAST ────────────────────────────────────────────────────────
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  document.getElementById('toastMsg').textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ── NAV / PAGE SWITCHING ───────────────────────────────────────
+const TOPBAR_CONTENT = {
+  dashboard: { title: 'October 2025', sub: 'Monthly Canteen Deduction Report', show: true },
+  employees: { title: 'Employees', sub: 'Manage the roster used for attendance & deduction matching', show: false },
+  attendancelogs: { title: 'Attendance Logs', sub: 'Office check-in / check-out records from the biometric device', show: false },
+  canteenlogs: { title: 'Canteen Logs', sub: 'Raw meal scans from canteen devices', show: false },
+  pricing: { title: 'Meal Pricing', sub: 'Per-meal rates used in deduction calculations', show: false },
+  reports: { title: 'Monthly Reports', sub: 'Generate, export, and archive monthly deduction reports', show: false },
+  syncdevices: { title: 'Sync Devices', sub: 'Biometric & canteen machine connections', show: false },
+};
+
+function setNavOnly(el) {
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  el.classList.add('active');
+}
+function setNav(el) { setNavOnly(el); } // kept for backward compatibility
+
+function showPage(name, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  if (el) setNavOnly(el);
+
+  const cfg = TOPBAR_CONTENT[name];
+  document.getElementById('topbarTitle').textContent = cfg.title;
+  document.getElementById('topbarSub').textContent = cfg.sub;
+  document.getElementById('topbarMonthPicker').style.display = cfg.show ? '' : 'none';
+  document.getElementById('topbarSecondaryBtn').style.display = cfg.show ? '' : 'none';
+  document.getElementById('topbarPrimaryBtn').style.display = cfg.show ? '' : 'none';
+
+  if (name === 'dashboard') renderDashboardPage();
+  if (name === 'employees') renderEmpTable(EMPLOYEES);
+  if (name === 'attendancelogs') renderAttTable(ATTENDANCE_LOGS);
+  if (name === 'canteenlogs') renderLogTable(CANTEEN_LOGS);
+  if (name === 'pricing') renderPricing();
+  if (name === 'reports') renderReportsPage();
+  if (name === 'syncdevices') renderSyncDevicesPage();
+}
+
+function setTab(el) {
+  el.closest('.tabs').querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function refreshAllViews() {
+  renderDashboardPage();
+  renderEmpTable(EMPLOYEES);
+  renderAttTable(ATTENDANCE_LOGS);
+  renderLogTable(CANTEEN_LOGS);
+  renderPricing();
+  renderReportArchive();
+  renderSyncDevicesPage();
+}
+
+// ── DEVICE SYNC ────────────────────────────────────────────────────
+const DEVICES = [
+  { id: 'office-biometric', name: 'Office Biometric', icon: '🕐', desc: 'Check-in / check-out attendance punches', match: null },
+  { id: 'canteen-a', name: 'Canteen Machine — Zone A', icon: '🍽️', desc: 'Meal scans, canteen', match: 'Canteen Machine — Zone A' },
+];
+let DEVICE_LAST_SYNC = {}; // deviceId -> ISO timestamp of most recent record pulled
+
+function deviceLatestTs(device) {
+  let latest = null;
+  if (device.id === 'office-biometric') {
+    ATTENDANCE_LOGS.forEach(a => {
+      const t = a.outTime || a.inTime;
+      if (t && (!latest || new Date(t) > new Date(latest))) latest = t;
+    });
+  } else {
+    CANTEEN_LOGS.filter(l => l.device === device.match).forEach(l => {
+      if (!latest || new Date(l.ts) > new Date(latest)) latest = l.ts;
+    });
+  }
+  return latest;
+}
+
+// Seeds DEVICE_LAST_SYNC from whatever records already exist (demo data or
+// data just loaded from Firestore). Called once at init and again after
+// Firebase finishes its first load.
+function initDeviceSyncTimes() {
+  DEVICES.forEach(d => { DEVICE_LAST_SYNC[d.id] = deviceLatestTs(d) || DEVICE_LAST_SYNC[d.id] || null; });
+  updateSidebarSyncTimes();
+}
+
+function fmtSyncTime(iso) {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+}
+
+function timeAgo(iso) {
+  if (!iso) return 'no data yet';
+  const mins = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins} min ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs} hr ago`;
+  return `${Math.floor(hrs / 24)}d ago`;
+}
+
+function updateSidebarSyncTimes() {
+  const off = document.getElementById('sidebarOfficeSync');
+  const can = document.getElementById('sidebarCanteenSync');
+  if (off) off.textContent = fmtSyncTime(DEVICE_LAST_SYNC['office-biometric']);
+  if (can) can.textContent = fmtSyncTime(DEVICE_LAST_SYNC['canteen-a']);
+}
+
+function renderSyncDevicesPage() {
+  const wrap = document.getElementById('syncDeviceCards');
+  if (!wrap) return; // page not in DOM yet on very first paint
+
+  const backendStatus = document.getElementById('syncBackendStatus');
+  const backendBadge = document.getElementById('syncBackendBadge');
+  if (backendStatus && backendBadge) {
+    if (firebaseReady) {
+      backendStatus.textContent = 'Connected — devices push records here automatically via the ZKTeco bridge script.';
+      backendBadge.className = 'badge badge-green';
+      backendBadge.textContent = 'Connected';
+    } else {
+      backendStatus.textContent = 'Backend unreachable — showing local demo data. "Sync Now" will still simulate a pull.';
+      backendBadge.className = 'badge badge-rose';
+      backendBadge.textContent = 'Offline';
+    }
+  }
+
+  wrap.innerHTML = DEVICES.map(d => {
+    const online = firebaseReady;
+    const count = d.id === 'office-biometric'
+      ? ATTENDANCE_LOGS.length
+      : CANTEEN_LOGS.filter(l => l.device === d.match).length;
+    const lastSync = DEVICE_LAST_SYNC[d.id];
+    return `
+      <div class="panel" style="padding:20px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span style="font-size:20px;">${d.icon}</span>
+            <div>
+              <div style="font-weight:700;font-size:14px;">${d.name}</div>
+              <div style="font-size:12px;color:var(--text-muted);">${d.desc}</div>
+            </div>
+          </div>
+          <span class="badge ${online ? 'badge-green' : 'badge-rose'}">${online ? 'Online' : 'Offline'}</span>
+        </div>
+        <div style="font-size:12px;color:var(--text-secondary);margin-bottom:4px;">
+          Last sync: <span class="mono">${fmtSyncTime(lastSync)}</span>
+        </div>
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:14px;">
+          ${timeAgo(lastSync)} · ${count} record(s) on file
+        </div>
+        <button class="btn btn-ghost btn-sm" style="width:100%;justify-content:center;" onclick="syncDeviceNow('${d.id}')">🔄 Sync Now</button>
+      </div>
+    `;
+  }).join('');
+}
+
+// Pulls the latest data for one device. When Firestore is connected, the
+// onSnapshot listeners already keep everything current in the background —
+// this simulates/forces an immediate pull, which also matters when the
+// backend is unreachable and there's nothing to listen to yet.
+function syncDeviceNow(deviceId) {
+  const device = DEVICES.find(d => d.id === deviceId);
+  if (!device) return;
+  const now = new Date();
+  const today = now.toISOString().slice(0, 10);
+  let added = false;
+
+  if (device.id === 'office-biometric') {
+    const alreadyToday = new Set(ATTENDANCE_LOGS.filter(a => a.date === today).map(a => a.empCode));
+    const candidates = EMPLOYEES.filter(e => !alreadyToday.has(e.code));
+    if (candidates.length) {
+      const e = candidates[Math.floor(Math.random() * candidates.length)];
+      const inTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 8 + Math.floor(Math.random() * 2), Math.floor(Math.random() * 60));
+      const entry = { id: 'ATT-' + Date.now(), empCode: e.code, empName: e.name, dept: e.dept, date: today, inTime: inTime.toISOString(), outTime: null, status: 'Present' };
+      ATTENDANCE_LOGS.unshift(entry);
+      fsSaveAttendance(entry);
+      renderAttTable(ATTENDANCE_LOGS);
+      added = true;
+    }
+  } else {
+    const alreadyToday = new Set(CANTEEN_LOGS.filter(l => l.ts.startsWith(today) && l.device === device.match).map(l => l.empCode));
+    const candidates = EMPLOYEES.filter(e => !alreadyToday.has(e.code));
+    if (candidates.length) {
+      const e = candidates[Math.floor(Math.random() * candidates.length)];
+      const meal = now.getHours() < 16 ? 'Lunch' : 'Dinner';
+      const entry = { id: 'LOG-' + Date.now(), empCode: e.code, empName: e.name, meal, device: device.match, ts: now.toISOString(), status: 'Matched' };
+      CANTEEN_LOGS.unshift(entry);
+      fsSaveLog(entry);
+      renderLogTable(CANTEEN_LOGS);
+      added = true;
+    }
+  }
+
+  DEVICE_LAST_SYNC[device.id] = now.toISOString();
+  updateSidebarSyncTimes();
+  renderSyncDevicesPage();
+  renderDashboardPage();
+  showToast(added
+    ? `🔄 ${device.name} synced — new record pulled at ${fmtSyncTime(now.toISOString())}`
+    : `✓ ${device.name} synced — already up to date`);
+}
+
+function syncAllDevices() {
+  DEVICES.forEach(d => syncDeviceNow(d.id));
+}
+
+// ── EMPLOYEES PAGE ───────────────────────────────────────────────
+function renderEmpTable(data) {
+  document.getElementById('empCountSub').textContent = `${EMPLOYEES.length} total employees`;
+  const body = document.getElementById('empTableBody');
+  if (!data.length) {
+    body.innerHTML = `<tr><td colspan="6"><div class="empty-state"><div class="empty-state-icon">👥</div><div class="empty-state-title">No employees match</div><div class="empty-state-sub">Try clearing filters or add a new employee.</div></div></td></tr>`;
+    return;
+  }
+  body.innerHTML = data.map((e) => {
+    const realIdx = EMPLOYEES.indexOf(e);
+    const active = e.active !== false;
+    return `
+      <tr>
+        <td>${realIdx + 1}</td>
+        <td>
+          <div class="emp-cell">
+            <div class="emp-avatar" style="background:${e.color || '#1E3A5F'}">${e.name.split(' ').map(x=>x[0]).join('').slice(0,2)}</div>
+            <div>
+              <div class="emp-name" style="cursor:pointer;" onclick="openDetail('${e.code}')">${e.name}</div>
+              <div class="emp-code">${e.code}</div>
+            </div>
+          </div>
+        </td>
+        <td>${e.dept}</td>
+        <td class="mono">${e.joined || '—'}</td>
+        <td><span class="badge ${active ? 'badge-green' : 'badge-rose'}">${active ? 'ACTIVE' : 'INACTIVE'}</span></td>
+        <td>
+          <button class="btn btn-ghost btn-sm" onclick="openEmpModal(${realIdx})">Edit</button>
+          <button class="btn btn-ghost btn-sm" onclick="deleteEmployee(${realIdx})">Delete</button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function filterEmpTable() {
+  const q = document.getElementById('empSearchInput').value.toLowerCase();
+  const dept = document.getElementById('empDeptFilter').value;
+  const status = document.getElementById('empStatusFilter').value;
+  const filtered = EMPLOYEES.filter(e =>
+    (!q || e.name.toLowerCase().includes(q) || e.code.toLowerCase().includes(q)) &&
+    (!dept || e.dept === dept) &&
+    (!status || (status === 'active' ? e.active !== false : e.active === false))
+  );
+  renderEmpTable(filtered);
+}
+
+function openEmpModal(idx) {
+  const isEdit = typeof idx === 'number';
+  document.getElementById('empModalTitle').textContent = isEdit ? 'Edit Employee' : 'Add Employee';
+  document.getElementById('empEditIndex').value = isEdit ? idx : -1;
+  const e = isEdit ? EMPLOYEES[idx] : null;
+  document.getElementById('empNameInput').value = e ? e.name : '';
+  document.getElementById('empCodeInput').value = e ? e.code : '';
+  document.getElementById('empDeptInput').value = e ? e.dept : 'Engineering';
+  document.getElementById('empJoinInput').value = e && e.joined ? e.joined : '';
+  document.getElementById('empDeviceIdInput').value = e && e.deviceUserId ? e.deviceUserId : '';
+  document.getElementById('empCanteenDeviceIdInput').value = e && e.canteenDeviceUserId ? e.canteenDeviceUserId : '';
+  document.getElementById('empActiveInput').checked = e ? e.active !== false : true;
+  document.getElementById('empModal').classList.add('open');
+}
+function closeEmpModal(ev) {
+  if (!ev || ev.target === document.getElementById('empModal'))
+    document.getElementById('empModal').classList.remove('open');
+}
+function saveEmployee() {
+  const idx = parseInt(document.getElementById('empEditIndex').value, 10);
+  const name = document.getElementById('empNameInput').value.trim();
+  const code = document.getElementById('empCodeInput').value.trim();
+  if (!name || !code) { showToast('⚠️ Name and employee code are required'); return; }
+  const palette = ['#1E3A5F','#059669','#7C3AED','#DC2626','#D97706','#0284C7'];
+  const emp = {
+    name, code,
+    dept: document.getElementById('empDeptInput').value,
+    joined: document.getElementById('empJoinInput').value,
+    deviceUserId: document.getElementById('empDeviceIdInput').value.trim(),
+    canteenDeviceUserId: document.getElementById('empCanteenDeviceIdInput').value.trim(),
+    active: document.getElementById('empActiveInput').checked,
+    present: idx >= 0 ? EMPLOYEES[idx].present : 0,
+    lunch: idx >= 0 ? EMPLOYEES[idx].lunch : 0,
+    dinner: idx >= 0 ? EMPLOYEES[idx].dinner : 0,
+    color: idx >= 0 ? EMPLOYEES[idx].color : palette[EMPLOYEES.length % palette.length],
+  };
+  if (idx >= 0) {
+    emp.id = EMPLOYEES[idx].id;
+    EMPLOYEES[idx] = emp;
+  } else {
+    EMPLOYEES.push(emp);
+  }
+  fsSaveEmployee(emp);
+  closeEmpModal();
+  refreshAllViews();
+  showToast(idx >= 0 ? '✓ Employee updated' : '✓ Employee added');
+}
+function deleteEmployee(idx) {
+  const emp = EMPLOYEES[idx];
+  EMPLOYEES.splice(idx, 1);
+  fsDeleteEmployee(emp);
+  refreshAllViews();
+  showToast(`🗑️ ${emp.name} removed`);
+}
+
+// ── EXCEL / CSV IMPORT ────────────────────────────────────────────
+function downloadEmpTemplate() {
+  const header = ['Name','Employee Code','Department','Join Date','Active','Device User ID','Canteen Device User ID'];
+  const sample = ['Rafiqul Islam','EMP-021','Engineering','2026-01-15','Yes','21','21'];
+  const csv = [header.join(','), sample.join(',')].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'employee-import-template.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('📄 Template downloaded — fill it in and use "Import Excel"');
+}
+
+// Maps a variety of likely header spellings to our internal field names.
+const EMP_IMPORT_HEADER_MAP = {
+  name: 'name', 'full name': 'name', employee: 'name',
+  code: 'code', 'employee code': 'code', 'emp code': 'code', id: 'code',
+  department: 'dept', dept: 'dept',
+  'join date': 'joined', joined: 'joined', 'joining date': 'joined',
+  active: 'active', status: 'active',
+  'device user id': 'deviceUserId', 'zkteco device user id': 'deviceUserId', 'attendance device id': 'deviceUserId',
+  'canteen device user id': 'canteenDeviceUserId', 'zkteco canteen device user id': 'canteenDeviceUserId', 'canteen device id': 'canteenDeviceUserId',
+};
+
+function normalizeImportRow(rawRow) {
+  const row = {};
+  Object.keys(rawRow).forEach(key => {
+    const norm = EMP_IMPORT_HEADER_MAP[key.trim().toLowerCase()];
+    if (norm) row[norm] = String(rawRow[key] ?? '').trim();
+  });
+  return row;
+}
+
+let empImportPreviewRows = []; // cached parsed + validated rows awaiting confirmation
+
+function handleEmpFileSelected(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = new Uint8Array(e.target.result);
+      const workbook = XLSX.read(data, { type: 'array' });
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      const rawRows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+      if (!rawRows.length) { showToast('⚠️ That file has no rows'); return; }
+      buildEmpImportPreview(rawRows);
+    } catch (err) {
+      console.error('Import parse failed:', err);
+      showToast('⚠️ Could not read that file — check it is a valid .xlsx/.csv');
+    }
+    event.target.value = ''; // allow re-selecting the same file later
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function buildEmpImportPreview(rawRows) {
+  const palette = ['#1E3A5F','#059669','#7C3AED','#DC2626','#D97706','#0284C7'];
+  empImportPreviewRows = rawRows.map((raw, i) => {
+    const row = normalizeImportRow(raw);
+    const existing = row.code ? EMPLOYEES.find(x => x.code === row.code) : null;
+
+    if (!row.name || !row.code) {
+      return { rowNum: i + 2, name: row.name || '—', code: row.code || '—', dept: row.dept || '—', action: 'skip', note: 'Missing Name or Employee Code' };
+    }
+    const activeVal = row.active !== undefined
+      ? !['no','false','0','inactive',''].includes(row.active.toLowerCase())
+      : true;
+
+    const empData = {
+      name: row.name,
+      code: row.code,
+      dept: row.dept || (existing ? existing.dept : 'Engineering'),
+      joined: row.joined || (existing ? existing.joined : ''),
+      active: activeVal,
+      deviceUserId: row.deviceUserId || (existing ? existing.deviceUserId : ''),
+      canteenDeviceUserId: row.canteenDeviceUserId || (existing ? existing.canteenDeviceUserId : ''),
+      present: existing ? existing.present : 0,
+      lunch: existing ? existing.lunch : 0,
+      dinner: existing ? existing.dinner : 0,
+      color: existing ? existing.color : palette[EMPLOYEES.length % palette.length],
+    };
+    // Only attach an id when one actually exists — Firestore's SDK throws
+    // if a field value is `undefined` (as opposed to the key being absent),
+    // which was silently failing every single "new employee" row on import.
+    if (existing) empData.id = existing.id;
+
+    return {
+      rowNum: i + 2,
+      action: existing ? 'update' : 'new',
+      note: existing ? 'Matched by employee code' : 'New employee',
+      emp: empData,
+    };
+  });
+  renderEmpImportPreview();
+  document.getElementById('empImportModal').classList.add('open');
+}
+
+function renderEmpImportPreview() {
+  const newCount = empImportPreviewRows.filter(r => r.action === 'new').length;
+  const updateCount = empImportPreviewRows.filter(r => r.action === 'update').length;
+  const errorCount = empImportPreviewRows.filter(r => r.action === 'skip').length;
+  document.getElementById('importNewCount').textContent = newCount;
+  document.getElementById('importUpdateCount').textContent = updateCount;
+  document.getElementById('importErrorCount').textContent = errorCount;
+  document.getElementById('importConfirmBtn').disabled = (newCount + updateCount) === 0;
+
+  document.getElementById('importPreviewBody').innerHTML = empImportPreviewRows.map(r => {
+    const badgeClass = r.action === 'new' ? 'badge-green' : r.action === 'update' ? 'badge-amber' : 'badge-rose';
+    const label = r.action === 'new' ? 'NEW' : r.action === 'update' ? 'UPDATE' : 'SKIPPED';
+    const e = r.emp;
+    return `
+      <tr>
+        <td class="mono">${r.rowNum}</td>
+        <td>${e ? e.name : r.name}</td>
+        <td class="mono">${e ? e.code : r.code}</td>
+        <td>${e ? e.dept : r.dept}</td>
+        <td><span class="badge ${badgeClass}">${label}</span></td>
+        <td class="form-hint" style="margin:0;">${r.note}</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function closeEmpImportModal(ev) {
+  if (!ev || ev.target === document.getElementById('empImportModal'))
+    document.getElementById('empImportModal').classList.remove('open');
+}
+
+async function confirmEmpImport() {
+  let added = 0, updated = 0, failed = 0;
+  const empObjs = [];
+  empImportPreviewRows.forEach(r => {
+    if (r.action === 'skip') return;
+    let empObj;
+    if (r.action === 'update') {
+      const idx = EMPLOYEES.findIndex(x => x.code === r.emp.code);
+      empObj = { ...EMPLOYEES[idx], ...r.emp };
+      EMPLOYEES[idx] = empObj;
+      updated++;
+    } else {
+      empObj = r.emp;
+      EMPLOYEES.push(empObj);
+      added++;
+    }
+    empObjs.push(empObj);
+  });
+
+  empImportPreviewRows = [];
+  closeEmpImportModal();
+  refreshAllViews();
+
+  if (!firebaseReady) {
+    showToast(`⚠️ Imported locally (${added} added, ${updated} updated) but Firebase is NOT connected — this data will disappear on refresh!`);
+    return;
+  }
+
+  // Save to Firestore and actually check whether each write succeeded,
+  // instead of firing-and-forgetting (which hid permission/rule errors before).
+  const results = await Promise.all(empObjs.map(emp => fsSaveEmployee(emp)));
+  failed = results.filter(ok => ok === false).length;
+
+  if (failed > 0) {
+    showToast(`⚠️ Import partial — ${added + updated - failed} saved, ${failed} FAILED to save to Firebase (check console / Firestore rules)`);
+  } else {
+    showToast(`✅ Import complete — ${added} added, ${updated} updated, all saved to Firebase`);
+  }
+}
+
+// ── ATTENDANCE LOGS PAGE ─────────────────────────────────────────
+function fmtTime(iso) {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+}
+function fmtDate(dstr) {
+  return new Date(dstr + 'T00:00:00').toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+function renderAttTable(data) {
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const todays = ATTENDANCE_LOGS.filter(a => a.date === todayStr);
+  document.getElementById('attCountSub').textContent = `${ATTENDANCE_LOGS.length} records over the last 7 working days`;
+  document.getElementById('attPresentToday').textContent = todays.filter(a => a.status === 'Present').length;
+  document.getElementById('attLateToday').textContent = todays.filter(a => a.status === 'Late').length;
+  document.getElementById('attAbsentToday').textContent = todays.filter(a => a.status === 'Absent').length;
+
+  const body = document.getElementById('attTableBody');
+  if (!data.length) {
+    body.innerHTML = `<tr><td colspan="8"><div class="empty-state"><div class="empty-state-icon">🕐</div><div class="empty-state-title">No attendance records match</div><div class="empty-state-sub">Try clearing filters or add a manual entry.</div></div></td></tr>`;
+    return;
+  }
+  body.innerHTML = data.map(a => {
+    const realIdx = ATTENDANCE_LOGS.indexOf(a);
+    const badgeClass = a.status === 'Present' ? 'badge-green' : a.status === 'Late' ? 'badge-amber' : 'badge-rose';
+    return `
+      <tr>
+        <td>${realIdx + 1}</td>
+        <td class="mono">${fmtDate(a.date)}</td>
+        <td>
+          <div class="emp-name" style="cursor:pointer;" onclick="openDetail('${a.empCode}')">${a.empName}</div>
+          <div class="emp-code">${a.empCode}</div>
+        </td>
+        <td>${a.dept}</td>
+        <td class="mono">${fmtTime(a.inTime)}</td>
+        <td class="mono">${fmtTime(a.outTime)}</td>
+        <td><span class="badge ${badgeClass}">${a.status.toUpperCase()}</span></td>
+        <td><button class="btn btn-ghost btn-sm" onclick="deleteAttendance(${realIdx})">Delete</button></td>
+      </tr>
+    `;
+  }).join('');
+}
+function filterAttTable() {
+  const q = document.getElementById('attSearchInput').value.toLowerCase();
+  const dept = document.getElementById('attDeptFilter').value;
+  const status = document.getElementById('attStatusFilter').value;
+  const filtered = ATTENDANCE_LOGS.filter(a =>
+    (!q || a.empName.toLowerCase().includes(q) || a.empCode.toLowerCase().includes(q)) &&
+    (!dept || a.dept === dept) &&
+    (!status || a.status === status)
+  );
+  renderAttTable(filtered);
+}
+function openAttModal() {
+  const sel = document.getElementById('attEmpInput');
+  sel.innerHTML = EMPLOYEES.map(e => `<option value="${e.code}">${e.name} (${e.code})</option>`).join('');
+  document.getElementById('attDateInput').value = new Date().toISOString().slice(0, 10);
+  document.getElementById('attStatusInput').value = 'Present';
+  document.getElementById('attInTimeInput').value = '09:00';
+  document.getElementById('attOutTimeInput').value = '18:00';
+  document.getElementById('attModal').classList.add('open');
+}
+function closeAttModal(ev) {
+  if (!ev || ev.target === document.getElementById('attModal'))
+    document.getElementById('attModal').classList.remove('open');
+}
+function saveAttendance() {
+  const code = document.getElementById('attEmpInput').value;
+  const emp = EMPLOYEES.find(e => e.code === code);
+  const date = document.getElementById('attDateInput').value;
+  const status = document.getElementById('attStatusInput').value;
+  if (!date) { showToast('⚠️ Pick a date for this entry'); return; }
+  const inVal = document.getElementById('attInTimeInput').value;
+  const outVal = document.getElementById('attOutTimeInput').value;
+  const entry = {
+    id: 'ATT-' + String(ATTENDANCE_LOGS.length + 1).padStart(5, '0'),
+    empCode: code,
+    empName: emp ? emp.name : code,
+    dept: emp ? emp.dept : '—',
+    date,
+    inTime: (status !== 'Absent' && inVal) ? new Date(`${date}T${inVal}`).toISOString() : null,
+    outTime: (status !== 'Absent' && outVal) ? new Date(`${date}T${outVal}`).toISOString() : null,
+    status,
+  };
+  ATTENDANCE_LOGS.unshift(entry);
+  fsSaveAttendance(entry);
+  closeAttModal();
+  renderAttTable(ATTENDANCE_LOGS);
+  showToast('✓ Manual attendance entry added');
+}
+function deleteAttendance(idx) {
+  const entry = ATTENDANCE_LOGS[idx];
+  ATTENDANCE_LOGS.splice(idx, 1);
+  fsDeleteAttendance(entry);
+  renderAttTable(ATTENDANCE_LOGS);
+  showToast('🗑️ Attendance entry removed');
+}
+
+// ── CANTEEN LOGS PAGE ────────────────────────────────────────────
+function renderLogTable(data) {
+  document.getElementById('logCountSub').textContent = `${CANTEEN_LOGS.length} scans in the last 7 working days`;
+  const todayStr = new Date().toDateString();
+  const lunchToday = CANTEEN_LOGS.filter(l => l.meal === 'Lunch' && new Date(l.ts).toDateString() === todayStr).length;
+  const dinnerToday = CANTEEN_LOGS.filter(l => l.meal === 'Dinner' && new Date(l.ts).toDateString() === todayStr).length;
+  const unmatched = CANTEEN_LOGS.filter(l => l.status === 'Unmatched').length;
+  document.getElementById('logLunchToday').textContent = lunchToday;
+  document.getElementById('logDinnerToday').textContent = dinnerToday;
+  document.getElementById('logUnmatched').textContent = unmatched;
+
+  const body = document.getElementById('logTableBody');
+  if (!data.length) {
+    body.innerHTML = `<tr><td colspan="8"><div class="empty-state"><div class="empty-state-icon">🍽️</div><div class="empty-state-title">No logs match</div><div class="empty-state-sub">Try clearing filters or add a manual log.</div></div></td></tr>`;
+    return;
+  }
+  body.innerHTML = data.map((l) => {
+    const realIdx = CANTEEN_LOGS.indexOf(l);
+    const dt = new Date(l.ts);
+    const stamp = dt.toLocaleDateString('en-GB', { day:'2-digit', month:'short' }) + ' · ' + dt.toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit' });
+    const billable = isCanteenLogBillable(l);
+    return `
+      <tr>
+        <td>${realIdx + 1}</td>
+        <td class="mono">${stamp}</td>
+        <td>
+          <div class="emp-name" ${l.status === 'Matched' ? `style="cursor:pointer;" onclick="openDetail('${l.empCode}')"` : ''}>${l.empName}</div>
+          <div class="emp-code">${l.empCode}</div>
+        </td>
+        <td>${l.meal}</td>
+        <td>${l.device}</td>
+        <td><span class="badge ${l.status === 'Matched' ? 'badge-green' : 'badge-rose'}">${l.status.toUpperCase()}</span></td>
+        <td><span class="badge ${billable ? 'badge-green' : 'badge-amber'}" title="${billable ? 'Counted toward this employee\'s deduction' : 'Not billed — no matching attendance in-time that day'}">${billable ? 'YES' : 'NO'}</span></td>
+        <td><button class="btn btn-ghost btn-sm" onclick="deleteLog(${realIdx})">Delete</button></td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function filterLogTable() {
+  const q = document.getElementById('logSearchInput').value.toLowerCase();
+  const meal = document.getElementById('logMealFilter').value;
+  const status = document.getElementById('logStatusFilter').value;
+  const filtered = CANTEEN_LOGS.filter(l =>
+    (!q || l.empName.toLowerCase().includes(q) || l.empCode.toLowerCase().includes(q)) &&
+    (!meal || l.meal === meal) &&
+    (!status || l.status === status)
+  );
+  renderLogTable(filtered);
+}
+
+function openLogModal() {
+  const sel = document.getElementById('logEmpInput');
+  sel.innerHTML = EMPLOYEES.map(e => `<option value="${e.code}">${e.name} (${e.code})</option>`).join('');
+  const now = new Date();
+  now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+  document.getElementById('logTimeInput').value = now.toISOString().slice(0, 16);
+  document.getElementById('logModal').classList.add('open');
+}
+function closeLogModal(ev) {
+  if (!ev || ev.target === document.getElementById('logModal'))
+    document.getElementById('logModal').classList.remove('open');
+}
+function saveLog() {
+  const code = document.getElementById('logEmpInput').value;
+  const emp = EMPLOYEES.find(e => e.code === code);
+  const log = {
+    id: 'LOG-' + String(CANTEEN_LOGS.length + 1).padStart(5, '0'),
+    empCode: code,
+    empName: emp ? emp.name : code,
+    meal: document.getElementById('logMealInput').value,
+    device: document.getElementById('logDeviceInput').value,
+    ts: new Date(document.getElementById('logTimeInput').value).toISOString(),
+    status: 'Matched',
+  };
+  CANTEEN_LOGS.unshift(log);
+  fsSaveLog(log);
+  closeLogModal();
+  renderLogTable(CANTEEN_LOGS);
+  showToast('✓ Manual log added');
+}
+function deleteLog(idx) {
+  const log = CANTEEN_LOGS[idx];
+  CANTEEN_LOGS.splice(idx, 1);
+  fsDeleteLog(log);
+  renderLogTable(CANTEEN_LOGS);
+  showToast('🗑️ Log entry removed');
+}
+
+// ── MEAL PRICING PAGE ────────────────────────────────────────────
+function renderPricing() {
+  document.getElementById('priceLunchDisplay').textContent = LUNCH_PRICE;
+  document.getElementById('priceDinnerDisplay').textContent = DINNER_PRICE;
+  document.getElementById('priceLunchInput').value = LUNCH_PRICE;
+  document.getElementById('priceDinnerInput').value = DINNER_PRICE;
+  const latest = PRICE_HISTORY[PRICE_HISTORY.length - 1];
+  if (latest) {
+    document.getElementById('priceLunchEffective').textContent = `Effective since ${latest.date}`;
+    document.getElementById('priceDinnerEffective').textContent = `Effective since ${latest.date}`;
+  }
+  document.getElementById('priceHistoryBody').innerHTML = [...PRICE_HISTORY].reverse().map(h => `
+    <tr>
+      <td class="mono">${h.date}</td>
+      <td class="num mono">${h.lunch}</td>
+      <td class="num mono">${h.dinner}</td>
+      <td>${h.note || '—'}</td>
+    </tr>
+  `).join('');
+}
+function savePricing() {
+  const lunch = parseFloat(document.getElementById('priceLunchInput').value);
+  const dinner = parseFloat(document.getElementById('priceDinnerInput').value);
+  if (isNaN(lunch) || isNaN(dinner) || lunch < 0 || dinner < 0) {
+    showToast('⚠️ Enter valid prices for both meals');
+    return;
+  }
+  LUNCH_PRICE = lunch;
+  DINNER_PRICE = dinner;
+  const noteVal = document.getElementById('priceNoteInput').value.trim();
+  const historyEntry = {
+    date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+    lunch, dinner,
+  };
+  if (noteVal) historyEntry.note = noteVal; // omit key entirely when blank — Firestore rejects `undefined` values
+  PRICE_HISTORY.push(historyEntry);
+  document.getElementById('priceNoteInput').value = '';
+  fsSavePricing();
+  refreshAllViews();
+  showToast('✓ Pricing updated — applied to all deduction calculations');
+}
+
+// ── MONTHLY REPORTS PAGE ─────────────────────────────────────────
+let REPORTS = []; // archive of generated reports: { id, month, generatedAt, empCount, totalCost, rows }
+
+function currentReportMonth() {
+  const input = document.getElementById('reportMonthInput');
+  if (input && input.value) return input.value; // "YYYY-MM"
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+}
+
+function monthLabel(monthStr) {
+  const [y, m] = monthStr.split('-').map(Number);
+  return new Date(y, m - 1, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+}
+
+// Builds the per-employee breakdown for a given "YYYY-MM" month from the
+// real ATTENDANCE_LOGS / CANTEEN_LOGS data (falls back to the employee's
+// running present/lunch/dinner counters if no dated logs exist for that
+// month yet — e.g. demo data or a month before logging started).
+// A canteen scan only counts toward a deduction if the employee actually
+// clocked in that day — this cross-checks the scan against the Office
+// Biometric attendance record (in-time) for the same employee & date.
+// Manual HR entries are exempt since a person already verified them by hand.
+function isCanteenLogBillable(log) {
+  if (log.status !== 'Matched') return false;
+  if (log.device === 'Manual Entry (HR)') return true;
+  const day = log.ts.slice(0, 10);
+  return ATTENDANCE_LOGS.some(a => a.empCode === log.empCode && a.date === day && a.inTime);
+}
+
+function computeMonthlyReport(monthStr, includeAll) {
+  const rows = EMPLOYEES.map(e => {
+    const attInMonth = ATTENDANCE_LOGS.filter(a => a.empCode === e.code && a.date.startsWith(monthStr));
+    const canteenInMonth = CANTEEN_LOGS.filter(l => l.empCode === e.code && l.ts.startsWith(monthStr));
+
+    const hasDatedLogs = attInMonth.length > 0 || canteenInMonth.length > 0;
+    const present = hasDatedLogs
+      ? attInMonth.filter(a => a.status !== 'Absent').length
+      : (e.present || 0);
+
+    let lunch, dinner;
+    if (hasDatedLogs) {
+      const billable = canteenInMonth.filter(l => isCanteenLogBillable(l));
+      const lunchDays = new Set(billable.filter(l => l.meal === 'Lunch').map(l => l.ts.slice(0, 10)));
+      const dinnerDays = new Set(billable.filter(l => l.meal === 'Dinner').map(l => l.ts.slice(0, 10)));
+      lunch = lunchDays.size;
+      dinner = dinnerDays.size;
+    } else {
+      lunch = e.lunch || 0;
+      dinner = e.dinner || 0;
+    }
+
+    const lunchCost = lunch * LUNCH_PRICE;
+    const dinnerCost = dinner * DINNER_PRICE;
+    return {
+      code: e.code, name: e.name, dept: e.dept, color: e.color,
+      present, lunch, dinner, lunchCost, dinnerCost,
+      total: lunchCost + dinnerCost,
+    };
+  });
+
+  return includeAll ? rows : rows.filter(r => r.present > 0 || r.lunch > 0 || r.dinner > 0);
+}
+
+function renderReportsPage() {
+  const input = document.getElementById('reportMonthInput');
+  if (!input.value) input.value = currentReportMonth();
+  const monthStr = currentReportMonth();
+  const label = monthLabel(monthStr);
+  const rows = computeMonthlyReport(monthStr);
+
+  const totalLunch = rows.reduce((s, r) => s + r.lunch, 0);
+  const totalDinner = rows.reduce((s, r) => s + r.dinner, 0);
+  const totalLunchCost = rows.reduce((s, r) => s + r.lunchCost, 0);
+  const totalDinnerCost = rows.reduce((s, r) => s + r.dinnerCost, 0);
+  const totalCost = totalLunchCost + totalDinnerCost;
+
+  document.getElementById('repEmpCount').textContent = rows.length;
+  document.getElementById('repLunchCount').textContent = totalLunch;
+  document.getElementById('repDinnerCount').textContent = totalDinner;
+  document.getElementById('repLunchCost').textContent = totalLunchCost.toLocaleString();
+  document.getElementById('repDinnerCost').textContent = totalDinnerCost.toLocaleString();
+  document.getElementById('repTotalCost').textContent = totalCost.toLocaleString();
+  document.getElementById('repMonthLabel1').textContent = label;
+  document.getElementById('repMonthLabel2').textContent = label;
+  document.getElementById('repTableSub').textContent = `${label} — ${rows.length} employee(s) with recorded activity`;
+
+  document.getElementById('reportTableBody').innerHTML = rows.length ? rows.map((r, i) => `
+    <tr>
+      <td>${i + 1}</td>
+      <td><div class="emp-name" style="cursor:pointer;" onclick="openDetail('${r.code}')">${r.name}</div><div class="emp-code">${r.code}</div></td>
+      <td>${r.dept}</td>
+      <td class="num mono">${r.present}</td>
+      <td class="num mono">${r.lunch}</td>
+      <td class="num mono">${r.dinner}</td>
+      <td class="num mono">${r.lunchCost.toLocaleString()}</td>
+      <td class="num mono">${r.dinnerCost.toLocaleString()}</td>
+      <td class="num mono" style="font-weight:700;">৳ ${r.total.toLocaleString()}</td>
+    </tr>
+  `).join('') : `<tr><td colspan="9"><div class="empty-state"><div class="empty-state-icon">📋</div><div class="empty-state-title">No activity for ${label}</div><div class="empty-state-sub">Try a different month, or check that logs have synced.</div></div></td></tr>`;
+
+  renderReportArchive();
+}
+
+function reportRowsToCsv(monthStr, rows) {
+  const header = ['Employee Code','Employee Name','Department','Present Days','Lunches','Dinners','Lunch Cost','Dinner Cost','Total Deduction'];
+  const lines = [header.join(',')];
+  rows.forEach(r => {
+    lines.push([r.code, `"${r.name}"`, r.dept, r.present, r.lunch, r.dinner, r.lunchCost, r.dinnerCost, r.total].join(','));
+  });
+  return lines.join('\n');
+}
+
+function exportReportCsv() {
+  const monthStr = currentReportMonth();
+  const rows = computeMonthlyReport(monthStr);
+  if (!rows.length) { showToast('⚠️ Nothing to export for this month'); return; }
+  const csv = reportRowsToCsv(monthStr, rows);
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `canteen-deduction-report-${monthStr}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('⬇️ CSV downloaded');
+}
+
+function generateAndSaveReport() {
+  const monthStr = currentReportMonth();
+  const rows = computeMonthlyReport(monthStr);
+  if (!rows.length) { showToast('⚠️ Nothing to generate — no activity this month'); return; }
+  const totalCost = rows.reduce((s, r) => s + r.total, 0);
+  const report = {
+    id: 'RPT-' + Date.now(),
+    month: monthStr,
+    monthLabel: monthLabel(monthStr),
+    generatedAt: new Date().toISOString(),
+    empCount: rows.length,
+    totalCost,
+    rows,
+  };
+  // Replace any existing archived report for the same month (re-generate = refresh)
+  REPORTS = REPORTS.filter(r => r.month !== monthStr);
+  REPORTS.unshift(report);
+  fsSaveReport(report);
+  renderReportArchive();
+  showToast(`⚡ Report generated for ${report.monthLabel}`);
+}
+
+function renderReportArchive() {
+  const badge = document.getElementById('reportsBadge');
+  if (badge) badge.textContent = REPORTS.length;
+  document.getElementById('reportArchiveBody').innerHTML = REPORTS.length ? REPORTS.map(r => {
+    const realIdx = REPORTS.indexOf(r);
+    const genDate = new Date(r.generatedAt).toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
+    return `
+      <tr>
+        <td>${r.monthLabel}</td>
+        <td class="mono">${genDate}</td>
+        <td class="num mono">${r.empCount}</td>
+        <td class="num mono" style="font-weight:700;">৳ ${r.totalCost.toLocaleString()}</td>
+        <td>
+          <button class="btn btn-ghost btn-sm" onclick="downloadArchivedReport(${realIdx})">Download CSV</button>
+          <button class="btn btn-ghost btn-sm" onclick="deleteReport(${realIdx})">Delete</button>
+        </td>
+      </tr>
+    `;
+  }).join('') : `<tr><td colspan="5"><div class="empty-state"><div class="empty-state-icon">🗂️</div><div class="empty-state-title">No reports generated yet</div><div class="empty-state-sub">Pick a month above and click "Generate & Save".</div></div></td></tr>`;
+}
+
+function downloadArchivedReport(idx) {
+  const r = REPORTS[idx];
+  const csv = reportRowsToCsv(r.month, r.rows);
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `canteen-deduction-report-${r.month}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function deleteReport(idx) {
+  const r = REPORTS[idx];
+  REPORTS.splice(idx, 1);
+  fsDeleteReport(r);
+  renderReportArchive();
+  showToast('🗑️ Report removed from archive');
+}
+
+// ── INIT ─────────────────────────────────────────────────────────
+seedAttendanceLogs();
+seedCanteenLogs();
+renderDashboardPage();
+renderEmpTable(EMPLOYEES);
+renderAttTable(ATTENDANCE_LOGS);
+renderLogTable(CANTEEN_LOGS);
+renderPricing();
+renderReportArchive();
+initDeviceSyncTimes();
+initFirebase();
+</script>
+</body>
+</html>
